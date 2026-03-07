@@ -1,0 +1,13 @@
+{
+    "name": "stryder-ui",
+    "version": "1.0.0",
+    "description": "STRYDER landing page – static site with glassmorphism UI",
+    "private": true,
+    "main": "index.html",
+    "scripts": {
+        "start": "npx serve ."
+    },
+    "dependencies": {
+        "serve": "^14.2.0"
+    }
+}
