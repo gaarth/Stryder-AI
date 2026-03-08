@@ -265,99 +265,118 @@ class AgentOrchestrator:
     # ========================================
     def _build_context(self, ops, ship_ids: list) -> str:
         """Build live simulation context for Groq system prompt."""
-        from backend.services.model_inference import infer_shipment
-        stats = ops.get_snapshot()["stats"]
+        try:
+            return self._build_context_inner(ops, ship_ids)
+        except Exception as e:
+            print(f"[STRYDER AI] Context build error: {e}")
+            import traceback; traceback.print_exc()
+            stats = ops.get_snapshot().get("stats", {})
+            return (f"=== LIVE SIMULATION STATE ===\n"
+                    f"Total: {stats.get('total', '?')} | In transit: {stats.get('in_transit', '?')} | "
+                    f"Delayed: {stats.get('delayed', '?')} | Disruptions: {stats.get('active_disruptions', '?')}")
 
-        # Fleet summary
+    def _build_context_inner(self, ops, ship_ids: list) -> str:
+        from backend.services.model_inference import infer_shipment
+        stats = ops.get_snapshot().get("stats", {})
+
         lines = [
             "=== LIVE SIMULATION STATE ===",
-            f"Total shipments: {stats['total']}",
-            f"In transit: {stats['in_transit']} | Delayed: {stats['delayed']} | Delivered: {stats['delivered']}",
-            f"Active disruptions: {stats['active_disruptions']}",
+            f"Total shipments: {stats.get('total', 0)}",
+            f"In transit: {stats.get('in_transit', 0)} | Delayed: {stats.get('delayed', 0)} | Delivered: {stats.get('delivered', 0)}",
+            f"Active disruptions: {stats.get('active_disruptions', 0)}",
             f"Strategy: {ops.agent_memory.get('global_strategy', 'balanced').upper()}",
         ]
 
-        # Run ML inference on the shipments the user is asking about
+        # ML inference on user-referenced shipments
         if ship_ids:
             for sid in ship_ids[:3]:
-                ship = next((s for s in ops.shipments if s["id"] == sid), None)
-                if ship:
-                    assessment = infer_shipment(ship)
-                    lines.append(f"\n--- Shipment #{sid} ---")
-                    lines.append(f"Route: {ship['origin']} -> {ship['destination']}")
-                    lines.append(f"Status: {ship['status']} | Carrier: {ship['carrier']}")
-                    lines.append(f"ETA: {ship['eta_hours']}h | Base cost: INR {ship['base_cost']:,.0f} | Current: INR {round(ship['current_cost']):,}")
-                    if ship.get("disrupted"):
-                        lines.append(f"DISRUPTED (event: {ship.get('disruption_id')})")
-                    # ML model outputs
-                    eta = assessment.get("eta", {})
-                    delay = assessment.get("delay", {})
-                    carrier = assessment.get("carrier", {})
-                    cascade = assessment.get("cascade", {})
-                    lines.append(f"@ETA_AGENT: predicted {eta.get('predicted_eta_days', 'N/A')} days")
-                    lines.append(f"@DELAY_AGENT: delay probability {delay.get('delay_probability', 'N/A')}")
-                    lines.append(f"@CARRIER_AGENT: tier {carrier.get('tier', 'N/A')}, variance {carrier.get('variance', 'N/A')}")
-                    lines.append(f"@CASCADE_MODEL: cascade probability {cascade.get('cascade_probability', 'N/A')}, severity {cascade.get('severity', 'N/A')}")
+                ship = next((s for s in ops.shipments if s.get("id") == sid), None)
+                if not ship:
+                    continue
+                lines.append(f"\n--- Shipment #{sid} ---")
+                lines.append(f"Route: {ship.get('origin','?')} -> {ship.get('destination','?')}")
+                lines.append(f"Status: {ship.get('status','?')} | Carrier: {ship.get('carrier','?')}")
+                lines.append(f"ETA: {ship.get('eta_hours','?')}h | Cost: INR {round(ship.get('current_cost', 0)):,}")
+                if ship.get("disrupted"):
+                    lines.append(f"DISRUPTED (event: {ship.get('disruption_id')})")
+                assessment = infer_shipment(ship) or {}
+                eta = assessment.get("eta") or {}
+                delay = assessment.get("delay") or {}
+                carrier = assessment.get("carrier") or {}
+                cascade = assessment.get("cascade") or {}
+                lines.append(f"@ETA_AGENT: {eta.get('predicted_eta_days', 'N/A')} days")
+                lines.append(f"@DELAY_AGENT: delay prob {delay.get('delay_probability', 'N/A')}")
+                lines.append(f"@CARRIER_AGENT: tier {carrier.get('tier', 'N/A')}, variance {carrier.get('variance', 'N/A')}")
+                lines.append(f"@CASCADE_MODEL: cascade {cascade.get('cascade_probability', 'N/A')}, severity {cascade.get('severity', 'N/A')}")
 
-        # Top at-risk shipments (always include for awareness)
+        # Top at-risk shipments
         at_risk = []
         for s in ops.shipments:
-            if s["status"] in ("IN_TRANSIT", "DELAYED"):
-                assessment = infer_shipment(s)
-                cp = assessment.get("cascade", {}).get("cascade_probability", 0)
-                dp = assessment.get("delay", {}).get("delay_probability", 0)
-                risk = (cp * 2) + dp + (0.3 if s.get("disrupted") else 0)
-                if risk > 0.5:
-                    at_risk.append((s, risk, assessment))
+            if s.get("status") in ("IN_TRANSIT", "DELAYED"):
+                try:
+                    assessment = infer_shipment(s) or {}
+                    cp = (assessment.get("cascade") or {}).get("cascade_probability", 0) or 0
+                    dp = (assessment.get("delay") or {}).get("delay_probability", 0) or 0
+                    risk = (cp * 2) + dp + (0.3 if s.get("disrupted") else 0)
+                    if risk > 0.5:
+                        at_risk.append((s, risk, cp, dp))
+                except Exception:
+                    continue
         at_risk.sort(key=lambda x: x[1], reverse=True)
 
         if at_risk:
             lines.append(f"\n=== TOP {min(len(at_risk), 5)} AT-RISK SHIPMENTS ===")
-            for s, risk, assess in at_risk[:5]:
-                cp = assess.get("cascade", {}).get("cascade_probability", 0)
-                dp = assess.get("delay", {}).get("delay_probability", 0)
-                lines.append(f"  #{s['id']} {s['origin']}->{s['destination']} [{s['status']}] "
-                             f"cascade={cp:.2f} delay={dp:.2f}")
+            for s, risk, cp, dp in at_risk[:5]:
+                lines.append(f"  #{s['id']} {s.get('origin','?')}->{s.get('destination','?')} "
+                             f"[{s.get('status','?')}] cascade={cp:.2f} delay={dp:.2f}")
         else:
             lines.append("\n=== RISK STATUS: ALL CLEAR ===")
 
-        # Active disruptions detail
-        active_disruptions = [d for d in getattr(ops, 'disruptions', []) if not d.get("resolved")]
-        if active_disruptions:
-            lines.append(f"\n=== ACTIVE DISRUPTIONS ({len(active_disruptions)}) ===")
-            for d in active_disruptions[:4]:
-                lines.append(f"  {d.get('type', 'UNKNOWN')} at {d.get('location', 'unknown')} "
-                             f"(severity: {d.get('severity', 'N/A')}, affects {d.get('affected_count', 0)} shipments)")
+        # Active disruptions
+        for d in getattr(ops, 'disruptions', []):
+            if not d.get("resolved"):
+                lines.append(f"  DISRUPTION: {d.get('type', '?')} at {d.get('location', '?')} "
+                             f"(severity: {d.get('severity', 'N/A')})")
 
         # User constraints
-        if self._command_state["priorities"]:
+        if self._command_state.get("priorities"):
             lines.append(f"\nUser priorities: {', '.join(self._command_state['priorities'])}")
-        if self._command_state["carrier_bans"]:
+        if self._command_state.get("carrier_bans"):
             lines.append(f"Carrier bans: {json.dumps(self._command_state['carrier_bans'])}")
 
         # Recent learnings
-        recent = ops.learning_logs[-5:] if ops.learning_logs else []
-        if recent:
-            lines.append("\n=== RECENT AGENT ACTIONS ===")
-            for log in recent:
-                lines.append(f"  [{log['agent']}] {log['message']}")
+        for log in (getattr(ops, 'learning_logs', None) or [])[-5:]:
+            lines.append(f"  [{log.get('agent','?')}] {log.get('message','')}")
 
-        # === INFRASTRUCTURE: Ports & Warehouses ===
+        # === INFRASTRUCTURE ===
         lines.append("\n=== PORT STATUS ===")
         for p in getattr(ops, 'port_states', []):
-            util = p.get('utilization', p.get('congestion', 0))
-            util_pct = util if isinstance(util, (int, float)) and util > 1 else round(util * 100)
-            incoming = len([s for s in ops.shipments if s.get('destination_id') == p['id'] and s['status'] == 'IN_TRANSIT'])
-            outgoing = len([s for s in ops.shipments if s.get('origin_id') == p['id'] and s['status'] == 'IN_TRANSIT'])
-            lines.append(f"  {p.get('name', p['id'])}: {util_pct}% utilized | {incoming} incoming, {outgoing} outgoing")
+            if not p:
+                continue
+            pid = p.get('id', '')
+            name = p.get('name', pid)
+            util_pct = p.get('congestion_pct', p.get('utilization', p.get('congestion', 0)))
+            if isinstance(util_pct, float) and util_pct <= 1.0:
+                util_pct = round(util_pct * 100)
+            incoming = len([s for s in ops.shipments if s.get('destination_id') == pid and s.get('status') == 'IN_TRANSIT'])
+            outgoing = len([s for s in ops.shipments if s.get('origin_id') == pid and s.get('status') == 'IN_TRANSIT'])
+            tp = p.get('throughput', 0)
+            lines.append(f"  {name}: {util_pct}% congestion | throughput {tp} | {incoming} incoming, {outgoing} outgoing")
 
         lines.append("\n=== WAREHOUSE STATUS ===")
         for w in getattr(ops, 'wh_states', []):
-            util = w.get('utilization', w.get('load', 0))
-            util_pct = util if isinstance(util, (int, float)) and util > 1 else round(util * 100)
-            incoming = len([s for s in ops.shipments if s.get('destination_id') == w['id'] and s['status'] == 'IN_TRANSIT'])
-            outgoing = len([s for s in ops.shipments if s.get('origin_id') == w['id'] and s['status'] == 'IN_TRANSIT'])
-            lines.append(f"  {w.get('name', w['id'])}: {util_pct}% utilized | {incoming} incoming, {outgoing} outgoing")
+            if not w:
+                continue
+            wid = w.get('id', '')
+            name = w.get('name', wid)
+            util_pct = w.get('utilization_pct', w.get('utilization', w.get('load', 0)))
+            if isinstance(util_pct, float) and util_pct <= 1.0:
+                util_pct = round(util_pct * 100)
+            incoming = len([s for s in ops.shipments if s.get('destination_id') == wid and s.get('status') == 'IN_TRANSIT'])
+            outgoing = len([s for s in ops.shipments if s.get('origin_id') == wid and s.get('status') == 'IN_TRANSIT'])
+            cap = w.get('capacity', 0)
+            curr = w.get('current_load', w.get('stock', 0))
+            lines.append(f"  {name}: {util_pct}% utilized ({curr}/{cap}) | {incoming} incoming, {outgoing} outgoing")
 
         return "\n".join(lines)
 
