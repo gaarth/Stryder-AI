@@ -125,10 +125,17 @@ class AgentOrchestrator:
         if any(w in msg for w in ["prioritize", "focus on", "always", "remember", "from now on"]):
             return "COMMAND"
 
-        # FIX_REQUEST
-        if re.search(r'apply\s+option\s+\d+', msg):
+        # FIX_REQUEST — only direct action phrases, not complex analytical requests
+        if re.search(r'apply\s+(option\s+)?\d+', msg):
             return "FIX_REQUEST"
-        if any(w in msg for w in ["apply", "fix", "reroute", "switch carrier", "execute"]):
+        # Short direct fix commands only
+        fix_direct = ["fix it", "fix this", "fix shipment", "reroute shipment", "switch carrier"]
+        if any(f in msg for f in fix_direct):
+            return "FIX_REQUEST"
+        # "fix" or "execute" alone (short msg) = action. In long msg = let Groq handle
+        if msg.strip() in ["fix", "fix it", "execute", "heal", "resolve"]:
+            return "FIX_REQUEST"
+        if re.search(r'\bfix\b.*#?\d+', msg) or re.search(r'\breroute\b.*#?\d+', msg):
             return "FIX_REQUEST"
 
         # SCENARIO_REQUEST
@@ -335,6 +342,23 @@ class AgentOrchestrator:
             for log in recent:
                 lines.append(f"  [{log['agent']}] {log['message']}")
 
+        # === INFRASTRUCTURE: Ports & Warehouses ===
+        lines.append("\n=== PORT STATUS ===")
+        for p in getattr(ops, 'port_states', []):
+            util = p.get('utilization', p.get('congestion', 0))
+            util_pct = util if isinstance(util, (int, float)) and util > 1 else round(util * 100)
+            incoming = len([s for s in ops.shipments if s.get('destination_id') == p['id'] and s['status'] == 'IN_TRANSIT'])
+            outgoing = len([s for s in ops.shipments if s.get('origin_id') == p['id'] and s['status'] == 'IN_TRANSIT'])
+            lines.append(f"  {p.get('name', p['id'])}: {util_pct}% utilized | {incoming} incoming, {outgoing} outgoing")
+
+        lines.append("\n=== WAREHOUSE STATUS ===")
+        for w in getattr(ops, 'wh_states', []):
+            util = w.get('utilization', w.get('load', 0))
+            util_pct = util if isinstance(util, (int, float)) and util > 1 else round(util * 100)
+            incoming = len([s for s in ops.shipments if s.get('destination_id') == w['id'] and s['status'] == 'IN_TRANSIT'])
+            outgoing = len([s for s in ops.shipments if s.get('origin_id') == w['id'] and s['status'] == 'IN_TRANSIT'])
+            lines.append(f"  {w.get('name', w['id'])}: {util_pct}% utilized | {incoming} incoming, {outgoing} outgoing")
+
         return "\n".join(lines)
 
     def _llm_respond(self, message: str, ops, ship_ids: list, parsed: dict) -> dict:
@@ -356,16 +380,25 @@ Below is the LIVE state of the simulation right now. Use this data to answer the
 
 {context}
 
+AVAILABLE EXECUTION COMMANDS (tell the user to type these to trigger real actions):
+- "fix it" — auto-finds and fixes the most critical shipment
+- "fix shipment #N" — fixes a specific shipment
+- "optimize shipment #N" — shows optimization options for a specific shipment
+- "apply option N" or "apply N" — executes a previously shown optimization option
+- "switch carrier shipment #N" — switches carrier for a specific shipment
+- "prioritize [location/rule]" — sets a permanent priority constraint
+- "never use [carrier] for [location]" — sets a permanent carrier ban
+
 RULES:
 1. Be conversational, intelligent, and direct. You are an operations expert, not a chatbot.
 2. When discussing shipments, reference the ML model outputs to support your analysis.
 3. If the user asks about risk, anomalies, or problems — dig into the data and give them insight.
-4. If the user wants to fix something, tell them to say "fix it" or "fix shipment #ID" and you'll execute.
-5. If the user wants to optimize, tell them to say "optimize shipment #ID".
-6. Don't dump raw JSON. Interpret the data like an analyst would.
-7. You can discuss strategy, trade-offs, what-if scenarios, carrier performance — anything about the network.
-8. Keep responses concise but thorough. No filler. No generic AI disclaimers.
-9. If asked about something outside logistics, you can still chat but bring it back to ops.
+4. For complex operations (e.g. "reduce warehouse load", "rebalance the network"), ANALYZE the infrastructure data, identify which specific shipments to reroute, and tell the user the exact commands to run (e.g. "I recommend: optimize shipment #45, then fix shipment #67").
+5. Don't dump raw JSON. Interpret the data like an analyst would.
+6. You can discuss strategy, trade-offs, what-if scenarios, carrier performance — anything about the network.
+7. Keep responses concise but thorough. No filler. No generic AI disclaimers.
+8. When referencing ports or warehouses, use the utilization data to give concrete numbers.
+9. For multi-step operations, break them down into specific executable steps the user can follow.
 10. Do NOT use markdown formatting (no **, ##, etc). Plain text only."""
 
         # Add user message to history

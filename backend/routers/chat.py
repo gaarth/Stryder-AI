@@ -31,8 +31,20 @@ class ChatResponse(BaseModel):
 async def send_message(msg: ChatMessage):
     """Send a message to agents. Use @AgentName to target specific agents."""
     orch = get_orchestrator()
-    result = orch.route_message(msg.message, msg.context)
-    return ChatResponse(**result)
+    try:
+        result = orch.route_message(msg.message, msg.context)
+        return ChatResponse(**result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        from datetime import datetime
+        return ChatResponse(
+            agent="System",
+            response=f"Backend error: {str(e)[:200]}. Try again or rephrase your question.",
+            timestamp=datetime.now().isoformat(),
+            thinking=False,
+            models_used=[],
+        )
 
 
 @router.get("/agents")
