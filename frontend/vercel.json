@@ -1,0 +1,16 @@
+{
+    "rewrites": [
+        {
+            "source": "/api/:path*",
+            "destination": "https://stryder-ai-backend.onrender.com/api/:path*"
+        },
+        {
+            "source": "/health",
+            "destination": "https://stryder-ai-backend.onrender.com/health"
+        },
+        {
+            "source": "/((?!assets|landing).*)",
+            "destination": "/index.html"
+        }
+    ]
+}

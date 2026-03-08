@@ -1,8 +1,16 @@
 """
-STRYDER AI — Central Agent Orchestrator v4
+STRYDER AI — Sovereign Orchestrator v5
 =============================================
-Pipeline: User Query → Intent Classifier → Location Detector → ML Inference → Prose Synthesis
-All responses backed by real data + 5 ML models. No boilerplate.
+Identity: Palantir-grade autonomous operations engine.
+Pipeline: User Query → Intent → Thinking Process → ML Inference → Prose Synthesis
+All responses backed by real data + 5 ML models. Clean terminal prose. No markdown.
+
+Protocols:
+- Sentinel: scans state before answering general queries
+- Strategist: synthesizes, never asks — proposes reroutes proactively
+- Executor: full autonomy — 'fix it' auto-selects the best action
+- Memory: rolling window of discussed shipments for follow-ups
+- Command Absorption: user constraints become permanent decision logic
 """
 import re
 import time
@@ -63,16 +71,19 @@ class AgentOrchestrator:
         self.loop_history: list[dict] = []
         self.max_log_size = 200
 
-        # ── CONTEXT TRACKING ──
+        # ── CONTEXT TRACKING (conversation memory) ──
         self._active_shipment_id: Optional[int] = None
+        self._previous_shipment_id: Optional[int] = None  # for "the other one"
         self._active_agent: Optional[str] = None
         self._last_optimize_id: Optional[int] = None
         self._last_recommendation: Optional[dict] = None
+        self._discussed_ids: list[int] = []  # rolling window of mentioned shipments
 
-        # ── COMMAND STATE ──
+        # ── COMMAND STATE (permanent constraints) ──
         self._command_state: dict = {
             "priorities": [],       # e.g. ["Vishakhapatnam exports"]
             "focus_locations": [],   # location IDs to highlight
+            "carrier_bans": {},     # { "Vishakhapatnam": ["CarrierX"] }
         }
 
     # ========================================
@@ -194,9 +205,22 @@ class AgentOrchestrator:
         location = parsed["location"]
         location_id = parsed["location_id"]
 
-        # Context tracking
+        # ── CONVERSATION MEMORY ──
+        # Handle "the other one", "what about that", follow-ups
+        msg_lower = message.lower()
+        if not ship_ids and ("other one" in msg_lower or "that one" in msg_lower or "previous" in msg_lower):
+            if self._previous_shipment_id:
+                ship_ids = [self._previous_shipment_id]
+
+        # Context tracking with memory
         if ship_ids:
+            if self._active_shipment_id and self._active_shipment_id != ship_ids[0]:
+                self._previous_shipment_id = self._active_shipment_id
             self._active_shipment_id = ship_ids[0]
+            if ship_ids[0] not in self._discussed_ids:
+                self._discussed_ids.append(ship_ids[0])
+                if len(self._discussed_ids) > 20:
+                    self._discussed_ids = self._discussed_ids[-20:]
         elif self._active_shipment_id and intent in ("OPTIMIZATION_REQUEST", "FIX_REQUEST"):
             ship_ids = [self._active_shipment_id]
 
@@ -355,6 +379,22 @@ class AgentOrchestrator:
     # ========================================
     def _handle_command(self, message: str, ops) -> dict:
         msg = message.lower()
+
+        # Detect carrier ban: "never use X for Y"
+        ban_match = re.search(r'never\s+use\s+(\w+[\w\s]*?)\s+for\s+(\w+)', msg)
+        if ban_match:
+            carrier = ban_match.group(1).strip().title()
+            location = ban_match.group(2).strip().title()
+            if location not in self._command_state["carrier_bans"]:
+                self._command_state["carrier_bans"][location] = []
+            if carrier not in self._command_state["carrier_bans"][location]:
+                self._command_state["carrier_bans"][location].append(carrier)
+            ops.agent_memory["user_commands"] = self._command_state
+            ops.add_learning("System", f"Permanent constraint: {carrier} banned for {location}")
+            return self._prose("System", None,
+                f"Constraint absorbed. {carrier} is now permanently excluded from {location} routing. "
+                f"All agents will enforce this in future decisions.")
+
         # Extract what to prioritize
         priority_text = message.strip()
         for prefix in ["prioritize", "focus on", "always", "remember", "from now on"]:
@@ -373,13 +413,13 @@ class AgentOrchestrator:
 
             # Save to agent memory
             ops.agent_memory["user_commands"] = self._command_state
-            ops.add_learning("System", f"User command absorbed: {priority_text}")
+            ops.add_learning("System", f"Command absorbed: {priority_text}")
 
             return self._prose("System", None,
-                f"Understood. I will {priority_text.lower()} in all future assessments. "
-                f"This preference is now active across all agents.")
+                f"Absorbed. '{priority_text}' is now a standing order across all agents. "
+                f"This will be enforced in every assessment from this point forward.")
 
-        return self._prose("System", None, "What would you like me to prioritize or remember?")
+        return self._prose("System", None, "Give me an instruction to absorb. For example: 'Prioritize Vishakhapatnam exports' or 'Never use FedEx for Kolkata.'")
 
     # ========================================
     # STATUS QUERY
@@ -473,7 +513,7 @@ class AgentOrchestrator:
         return self._prose("System", subtag, "\n".join(lines))
 
     # ========================================
-    # FIX REQUEST
+    # FIX REQUEST (full autonomy mode)
     # ========================================
     def _handle_fix(self, message, clean_msg, ship_ids, ops, target, subtag) -> dict:
         apply_match = re.search(r'apply\s+option\s+(\d+)', message, re.IGNORECASE)
@@ -481,7 +521,7 @@ class AgentOrchestrator:
             opt_idx = int(apply_match.group(1))
             sid = self._last_optimize_id or (ship_ids[0] if ship_ids else None)
             if not sid:
-                return self._prose("Executor", subtag, "No pending optimization. Use @Strategist:ETA_AGENT optimize shipment <id> first.")
+                return self._prose("Executor", subtag, "No pending optimization context. Run an optimization first, then I can apply.")
             result = ops.apply_option(sid, opt_idx)
             if "error" in result:
                 return self._prose("Executor", subtag, result["error"])
@@ -489,7 +529,43 @@ class AgentOrchestrator:
             return self._prose("Executor", subtag,
                 f"@Executor applied {result['applied']} to shipment #{sid}. "
                 f"ETA: {result['old_eta']}h down to {result['new_eta']}h. "
-                f"Cost: INR {result['old_cost']:,} to INR {result['new_cost']:,}.")
+                f"Cost: INR {result['old_cost']:,} to INR {result['new_cost']:,}.",
+                thinking=True, models=["ETA_AGENT"])
+
+        # ── AUTONOMOUS FIX: "fix it" without specifying a shipment ──
+        if not ship_ids and ("fix it" in clean_msg.lower() or "fix this" in clean_msg.lower() or clean_msg.lower().strip() in ["fix", "fix it", "fix this"]):
+            # Auto-find the most critical failing shipment
+            delayed = [s for s in ops.shipments if s["status"] == "DELAYED"]
+            disrupted = [s for s in ops.shipments if s.get("disrupted") and s["status"] != "DELIVERED"]
+            critical = disrupted or delayed
+            if not critical:
+                return self._prose("Executor", subtag, "All shipments are currently on track. Nothing to fix.")
+            # Pick the one with highest cost impact
+            worst = max(critical, key=lambda s: s["current_cost"] - s["base_cost"])
+            sid = worst["id"]
+            self._active_shipment_id = sid
+            # Attempt optimization and auto-apply best option
+            result = ops.optimize_eta(sid)
+            if "error" in result:
+                return self._prose("Executor", subtag, f"Identified shipment #{sid} as critical but: {result['error']}")
+            # Auto-apply option 1
+            apply_result = ops.apply_option(sid, 1)
+            if "error" in apply_result:
+                # Fall back to showing options
+                self._last_optimize_id = sid
+                lines = [f"Shipment #{sid} is the most critical ({worst['origin']} to {worst['destination']}, {worst['status']})."]
+                for opt in result["options"]:
+                    lines.append(f"Option {opt['index']}: {opt['description']} (saves {opt['eta_saved']}h, +INR {opt['cost_increase']:,})")
+                lines.append("Say 'Apply option 1' to execute.")
+                return self._prose("Executor", subtag, "\n".join(lines), thinking=True, models=["ETA_AGENT", "DELAY_AGENT"])
+
+            ops.add_learning("Executor", f"Auto-fixed shipment #{sid}: {apply_result['applied']}")
+            return self._prose("Executor", subtag,
+                f"Identified #{sid} as the most critical shipment ({worst['origin']} to {worst['destination']}). "
+                f"@Executor auto-applied: {apply_result['applied']}. "
+                f"ETA improved from {apply_result['old_eta']}h to {apply_result['new_eta']}h. "
+                f"Cost adjusted from INR {apply_result['old_cost']:,} to INR {apply_result['new_cost']:,}.",
+                thinking=True, models=["ETA_AGENT", "DELAY_AGENT", "CASCADE_MODEL"])
 
         if ship_ids:
             sid = ship_ids[0]
@@ -502,7 +578,17 @@ class AgentOrchestrator:
                     ops.add_learning("Executor", f"Switched carrier for #{sid}: {result['old_carrier']} to {result['new_carrier']}")
                     return self._prose("Executor", subtag,
                         f"@Executor switched carrier for shipment #{sid} from {result['old_carrier']} to {result['new_carrier']}.")
-        return self._prose("Executor", subtag, "Specify a shipment and action. Example: Apply option 1, or switch carrier for shipment #13")
+            # Auto-optimize this shipment
+            result = ops.optimize_eta(sid)
+            if "error" not in result:
+                self._last_optimize_id = sid
+                lines = [f"Shipment #{sid} ({ship['origin']} to {ship['destination']}, {ship['status']})."]
+                for opt in result["options"]:
+                    lines.append(f"Option {opt['index']}: {opt['description']} (saves {opt['eta_saved']}h, +INR {opt['cost_increase']:,})")
+                lines.append("Say 'Apply option 1' to execute.")
+                return self._prose("Executor", subtag, "\n".join(lines), thinking=True, models=["ETA_AGENT"])
+
+        return self._prose("Executor", subtag, "I need a target. Tell me which shipment to fix, or just say 'fix it' and I will handle the most critical one.")
 
     # ========================================
     # OPTIMIZATION REQUEST (ML-backed)
@@ -657,15 +743,31 @@ class AgentOrchestrator:
             f"Strategy: {ops.agent_memory['global_strategy'].upper()}.")
 
     # ========================================
-    # OUTPUT (prose, no markdown)
+    # THINKING PROCESS (internal monologue)
+    # ========================================
+    def _build_thinking(self, models: list) -> str:
+        """Build thinking process block showing which sub-agents are being consulted."""
+        if not models:
+            return ""
+        tags = ", ".join(f"@{m}" for m in models)
+        return f"[Thinking: consulting {tags}]"
+
+    # ========================================
+    # OUTPUT (clean terminal prose, no markdown)
     # ========================================
     def _prose(self, agent: str, subtag: Optional[str], response, thinking=False, models=None) -> dict:
         if isinstance(response, dict):
             text = response.get("response", str(response))
         else:
             text = str(response)
-        # Strip any markdown artifacts
-        text = text.replace("**", "").replace("##", "").replace("# ", "")
+        # Strip markdown artifacts — clean terminal prose only
+        text = text.replace("**", "").replace("##", "").replace("# ", "").replace("---", "")
+
+        # Prepend thinking block when ML models were consulted
+        thinking_block = self._build_thinking(models or [])
+        if thinking_block:
+            text = f"{thinking_block}\n\n{text}"
+
         return {
             "agent": agent,
             "subtag": subtag,

@@ -1,8 +1,11 @@
 /**
  * STRYDER AI — API Service
- * Centralized API client for all backend endpoints
+ * Centralized API client for all backend endpoints.
+ * Uses VITE_BACKEND_URL (env) or falls back to Render production URL.
  */
-const BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+const BASE = import.meta.env.VITE_BACKEND_URL || 'https://stryder-ai-backend.onrender.com';
+
+let _connected = false;
 
 async function request(path, options = {}) {
     const url = `${BASE}${path}`;
@@ -13,9 +16,21 @@ async function request(path, options = {}) {
     if (config.body && typeof config.body === 'object') {
         config.body = JSON.stringify(config.body);
     }
-    const res = await fetch(url, config);
-    if (!res.ok) throw new Error(`API Error ${res.status}: ${path}`);
-    return res.json();
+    try {
+        const res = await fetch(url, config);
+        if (!res.ok) throw new Error(`API Error ${res.status}: ${path}`);
+
+        // Log first successful connection
+        if (!_connected) {
+            _connected = true;
+            console.log(`%c[STRYDER AI] SYSTEM CONNECTED — Backend: ${BASE}`, 'color: #00ff88; font-weight: bold;');
+        }
+
+        return res.json();
+    } catch (err) {
+        console.error(`[STRYDER AI] Fetch failed: ${path}`, err.message);
+        throw err;
+    }
 }
 
 const api = {
@@ -55,6 +70,10 @@ const api = {
 
     // Sim Control
     tick: (mins = 30) => request('/api/simulation/control', { method: 'POST', body: { action: 'tick', value: mins } }),
+
+    // Ops
+    reset: () => request('/api/ops/reset', { method: 'POST' }),
+    simControl: (data) => request('/api/ops/sim-control', { method: 'POST', body: data }),
 };
 
 export default api;

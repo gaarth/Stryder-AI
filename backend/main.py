@@ -71,6 +71,8 @@ async def health():
     world = get_world_state()
     orch = get_orchestrator()
 
+    print("[STRYDER AI] SYSTEM CONNECTED — healthcheck hit")
+
     return {
         "status": "healthy",
         "simulation": {
