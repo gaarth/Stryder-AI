@@ -1,0 +1,20 @@
+# render.yaml — Stryder AI Backend
+services:
+  - type: web
+    name: stryder-ai-backend
+    runtime: python
+    region: singapore
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: BACKEND_CORS_ORIGINS
+        value: https://stryder-ai.vercel.app,http://localhost:5173,http://localhost:3000
+      - key: PYTHON_VERSION
+        value: "3.13"

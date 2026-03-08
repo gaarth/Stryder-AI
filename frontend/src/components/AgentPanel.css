@@ -1,0 +1,116 @@
+.agent-panel .agent-count {
+    color: var(--accent);
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+.agent-card {
+    display: flex;
+    gap: var(--gap-md);
+    align-items: flex-start;
+    padding: var(--gap-sm) var(--gap-md);
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.agent-card:last-child {
+    border-bottom: none;
+}
+
+.agent-card:hover {
+    background: var(--bg-panel-hover);
+}
+
+.agent-card.thinking::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--agent-color);
+    box-shadow: 0 0 8px var(--agent-color);
+    animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+.agent-icon {
+    font-size: 18px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a0a;
+    border: 1px solid var(--agent-color, var(--border-color));
+    border-radius: var(--radius-sm);
+    color: var(--agent-color, var(--accent));
+    flex-shrink: 0;
+}
+
+.agent-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.agent-name-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-sm);
+}
+
+.agent-name {
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--text-bright);
+}
+
+.status-badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.ok {
+    background: #00ff4118;
+    color: var(--status-ok);
+}
+
+.status-badge.warning {
+    background: #ffaa0018;
+    color: var(--status-warning);
+}
+
+.status-badge.danger {
+    background: #ff333318;
+    color: var(--status-danger);
+}
+
+.status-badge.info {
+    background: #00aaff18;
+    color: var(--status-info);
+}
+
+.agent-role {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.agent-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+    margin-top: 4px;
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.agent-meta .confidence-bar {
+    flex: 1;
+}

@@ -1,0 +1,71 @@
+.status-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 16px;
+    background: linear-gradient(180deg, #0d140d, var(--bg-primary));
+    border-bottom: 1px solid var(--border-color);
+    font-size: 11px;
+    font-family: var(--font-mono);
+}
+
+.ss-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ss-brand {
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 4px;
+    font-size: 13px;
+}
+
+.ss-tag {
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+}
+
+.ss-sep {
+    color: var(--border-color);
+}
+
+.ss-item {
+    color: var(--text-secondary);
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+.ss-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ss-mode {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border: 1px solid;
+    border-radius: 3px;
+    letter-spacing: 1px;
+}
+
+.ss-mode.auto {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+}
+
+.ss-mode.manual {
+    color: var(--status-danger);
+    border-color: #ff333366;
+}
+
+.ss-clock {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 2px;
+}
