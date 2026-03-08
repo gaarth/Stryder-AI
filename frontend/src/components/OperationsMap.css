@@ -1,0 +1,17 @@
+.ops-map {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.ops-map .leaflet-container {
+    height: 100% !important;
+    width: 100% !important;
+}
+
+/* Better tile contrast */
+.leaflet-tile {
+    filter: brightness(0.4) saturate(0.3) hue-rotate(80deg) contrast(1.2) !important;
+}

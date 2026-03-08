@@ -1,0 +1,48 @@
+# Environment
+.env
+.env.local
+.env.production
+.env*.local
+frontend/.env
+frontend/.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+*.egg
+
+# ML Models
+backend/ml_models/saved_models/
+*.joblib
+*.pkl
+*.h5
+
+# Node / Next.js
+node_modules/
+frontend/.next/
+frontend/out/
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data outputs
+data/processed/
+data/synthetic/
+
+# Logs
+*.log

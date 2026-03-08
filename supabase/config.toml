@@ -1,0 +1,15 @@
+# Supabase Config — Stryder AI
+[project]
+project_id = "xdgbcjkzjmcksgmuremr"
+region = "ap-southeast-1"
+
+[api]
+enabled = true
+schemas = ["public"]
+extra_search_path = ["public"]
+
+[db]
+major_version = 17
+
+[realtime]
+enabled = true

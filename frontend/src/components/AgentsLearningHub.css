@@ -1,0 +1,276 @@
+/* ============================================================
+   AgentsLearningHub — Horizontally stretched list, 
+   Syne for headings, Inter everywhere else.
+   Gradient: White to Green.
+   ============================================================ */
+
+.learning-hub-dashboard {
+    padding: 24px;
+    font-family: var(--font-sans);
+    /* Inter for the body */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    height: 100%;
+}
+
+.learning-hub-dashboard.visible {
+    opacity: 1;
+}
+
+.lh-logs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 1400px;
+    /* Stretch wide, matching other panels */
+    margin: 0 auto;
+}
+
+.lh-dashboard-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-card);
+    padding: 28px 40px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Layout horizontally for wider screen space */
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.lh-dashboard-card:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--glass-border-hover);
+    box-shadow: 0 0 30px rgba(0, 255, 135, 0.15);
+}
+
+.lh-dashboard-card.animate-in {
+    animation: slideUpFade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Header */
+.lh-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.lh-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.lh-expand-indicator {
+    font-family: var(--font-monospace);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    transition: color 0.2s ease;
+}
+
+.lh-dashboard-card:hover .lh-expand-indicator {
+    color: var(--accent);
+}
+
+.lh-brand-icon {
+    font-size: 18px;
+    color: var(--accent);
+    /* Emerald Green */
+}
+
+.lh-brand-text {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    font-family: var(--font-sans);
+    /* Inter */
+
+    /* White to Green from bottom gradient */
+    background: linear-gradient(180deg, #ffffff 30%, #00ff87 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+}
+
+/* Heading - STRICTLY Syne and landing page white/green gradient */
+.lh-card-title {
+    font-family: var(--font-display);
+    /* Syne */
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+
+    /* Dynamic styling used in landing page */
+    background: linear-gradient(180deg, #ffffff 40%, #00ff87 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 30px rgba(0, 255, 135, 0.1));
+}
+
+/* Body Text - Inter */
+.lh-card-desc {
+    font-family: var(--font-sans);
+    /* Inter */
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    /* Plain white slightly translucent */
+    margin-bottom: 32px;
+    line-height: 1.6;
+    max-width: 900px;
+}
+
+.lh-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.lh-strategy-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.lh-strategy-label {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.lh-strategy-pill {
+    font-family: var(--font-sans);
+    display: inline-block;
+    padding: 10px 20px;
+    background: rgba(0, 255, 135, 0.05);
+    border: 1px solid rgba(0, 255, 135, 0.2);
+    color: var(--accent);
+    /* Emerald Green */
+    font-size: 13px;
+    font-weight: 800;
+    border-radius: var(--radius-pill);
+    letter-spacing: 0.03em;
+    transition: all 0.2s ease;
+    width: fit-content;
+}
+
+.lh-dashboard-card:hover .lh-strategy-pill {
+    background: rgba(0, 255, 135, 0.1);
+    border-color: rgba(0, 255, 135, 0.4);
+    box-shadow: 0 0 16px rgba(0, 255, 135, 0.15);
+}
+
+.lh-card-meta {
+    font-family: var(--font-mono);
+    /* Keep data stats monospaced or use inter */
+    display: flex;
+    gap: 32px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+@keyframes slideUpFade {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Claude Thinking Animation ── */
+.claude-thinking-container {
+    max-height: 0;
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    margin-top: 0;
+    border-top: 1px solid transparent;
+}
+
+.claude-thinking-container.expanded {
+    max-height: 1000px;
+    opacity: 1;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.claude-thinking-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.claude-spin {
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    animation: rotate 2s linear infinite;
+    display: inline-block;
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.claude-thinking-content {
+    border-left: 2px solid #333333;
+    padding-left: 16px;
+    margin-left: 6px;
+}
+
+.claude-log {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: #aaaaaa;
+}
+
+.cursor-blink {
+    color: #aaaaaa;
+    animation: blink 0.8s step-start infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    50% {
+        opacity: 1;
+    }
+
+    51%,
+    100% {
+        opacity: 0;
+    }
+}

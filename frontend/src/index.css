@@ -1,0 +1,152 @@
+/* ============================================================
+   STRYDER AI — Global Styles v4
+   Visual Overhaul: design.md Glassmorphism System
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@700;800&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* ─── Core Backgrounds ─── */
+  --bg: #000000;
+  --bg-primary: #000000;
+  --bg-panel: rgba(255, 255, 255, 0.05);
+  --bg-panel-alt: rgba(255, 255, 255, 0.08);
+  --bg-input: rgba(255, 255, 255, 0.03);
+  --bg-card: rgba(255, 255, 255, 0.04);
+
+  /* ─── Borders ─── */
+  --border: rgba(0, 255, 135, 0.12);
+  --border-color: rgba(0, 255, 135, 0.12);
+  --border-light: rgba(0, 255, 135, 0.08);
+
+  /* ─── Text ─── */
+  --text: rgba(255, 255, 255, 0.95);
+  --text-bright: #ffffff;
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-dim: rgba(255, 255, 255, 0.55);
+  --text-muted: rgba(255, 255, 255, 0.45);
+  --white: #ffffff;
+
+  /* ─── Accent System ─── */
+  --accent: #00ff87;
+  --accent-dim: rgba(0, 255, 135, 0.35);
+  --accent-muted: rgba(0, 255, 135, 0.15);
+
+  /* ─── Status Colors ─── */
+  --status-ok: #00ff87;
+  --status-warning: #f59e0b;
+  --status-danger: #ef4444;
+  --blue: #3b82f6;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --cyan: #06b6d4;
+  --purple: #8b5cf6;
+
+  /* ─── Agent Colors ─── */
+  --agent-orchestrator: #00ff87;
+  --agent-sentinel: #3b82f6;
+  --agent-strategist: #f59e0b;
+  --agent-executor: #8b5cf6;
+  --agent-actuary: #06b6d4;
+  --agent-cascade: #ef4444;
+
+  /* ─── Glassmorphism ─── */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-bg-hover: rgba(255, 255, 255, 0.10);
+  --glass-border: rgba(0, 255, 135, 0.15);
+  --glass-border-hover: rgba(0, 255, 135, 0.35);
+  --glass-blur: 16px;
+
+  /* ─── Typography ─── */
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* ─── Spacing ─── */
+  --radius: 8px;
+  --radius-card: 1rem;
+  --radius-pill: 9999px;
+
+  /* ─── Motion ─── */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 135, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 135, 0.35);
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Leaflet — Dark Map Theme */
+.leaflet-container {
+  background: #0a0a0a !important;
+}
+
+.leaflet-control-zoom a {
+  background: var(--bg-panel) !important;
+  backdrop-filter: blur(var(--glass-blur)) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  transition: all 0.2s var(--ease-smooth) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: var(--glass-bg-hover) !important;
+  border-color: var(--glass-border-hover) !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: rgba(10, 10, 10, 0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(10, 10, 10, 0.9) !important;
+}
