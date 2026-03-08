@@ -8,7 +8,9 @@ import Dashboard from '../components/Dashboard';
 import AgentsLearningHub from '../components/AgentsLearningHub';
 import './Terminal.css';
 
-const _BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+// Production: empty base → relative /api/* paths → Vercel proxy → Render
+// Development: VITE_BACKEND_URL or localhost:8000
+const _BACKEND = import.meta.env.PROD ? '' : (import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000');
 const API = `${_BACKEND}/api/ops`;
 const CHAT_API = `${_BACKEND}/api/chat`;
 
