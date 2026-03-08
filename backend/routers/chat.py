@@ -1,7 +1,7 @@
 """
 STRYDER AI - Chat Router
 ==========================
-Agent chat endpoints with @tag routing and subtag dispatch.
+Agent chat endpoints with @tag routing, ML inference, and thinking signals.
 """
 
 from fastapi import APIRouter, HTTPException
@@ -23,6 +23,8 @@ class ChatResponse(BaseModel):
     subtag: Optional[str] = None
     response: str
     timestamp: str
+    thinking: bool = False
+    models_used: list[str] = []
 
 
 @router.post("/send", response_model=ChatResponse)
