@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="STRYDER — The next generation of intelligent AI-powered movement and navigation." />
+  <meta name="theme-color" content="#000000" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="STRYDER — Intelligent Navigation" />
+  <meta property="og:description" content="The next generation of AI-powered movement and navigation." />
+
+  <!-- Fonts: Syne (headings) + Inter (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Syne:wght@700;800&display=swap"
+    rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Lenis Smooth Scroll -->
+  <link rel="stylesheet" href="https://unpkg.com/lenis@1.1.18/dist/lenis.css">
+  <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+
+  <title>STRYDER</title>
+</head>
+
+<body>
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Glassmorphism Persistent Navigation Bar     -->
+  <!-- ═══════════════════════════════════════════ -->
+  <nav class="sticky-nav" id="stickyNav">
+    <div class="sticky-nav__logo">STRYDER</div>
+    <ul class="sticky-nav__links">
+      <li><a href="#problems">Problems</a></li>
+      <li><a href="#what-we-do">Solutions</a></li>
+      <li><a href="#features">Features</a></li>
+    </ul>
+    <a href="#" class="glass-btn glass-btn--nav">Get Started</a>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Media Layer: Video + Hero + Problems        -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="media-layer">
+    <!-- Video Background -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="video-bg" aria-hidden="true">
+      <!-- Dual video elements for seamless crossfade loop -->
+      <video id="bgVideo1" class="bg-video active" muted playsinline preload="auto">
+        <source src="assets/video/bg.mp4" type="video/mp4" />
+      </video>
+      <video id="bgVideo2" class="bg-video" muted playsinline preload="auto">
+        <source src="assets/video/bg.mp4" type="video/mp4" />
+      </video>
+      <div class="video-overlay"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- Main Content                                -->
+    <!-- ═══════════════════════════════════════════ -->
+    <main class="hero" id="hero">
+      <div class="hero__content">
+
+        <!-- Intro label -->
+        <p class="hero__label anim-fade-up" style="--delay: 0s">introducing</p>
+
+        <!-- Main heading -->
+        <h1 class="hero__title anim-fade-up" style="--delay: 0.2s">STRYDER</h1>
+
+        <!-- Description -->
+        <p class="hero__desc anim-fade-up" style="--delay: 0.4s">
+          Stryder is the digital twin of the supply chain that doesn't just <span
+            class="text-orange-gradient">monitor</span> it <span class="text-green-gradient">negotiates</span>.
+        </p>
+
+        <!-- CTA Button -->
+        <div class="hero__actions anim-fade-up" style="--delay: 0.6s">
+          <a href="#" class="glass-btn" id="ctaBtn">
+            <span>Get Started</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </a>
+          <a href="#" class="glass-btn glass-btn--ghost" id="learnMoreBtn">Learn More</a>
+        </div>
+
+      </div>
+    </main>
+  </div> <!-- /media-layer -->
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Content Layer: The rest of the site         -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="content-layer">
+    <!-- Removed glass-divider for a smooth fade -->
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- Scrollytelling: Problems Section            -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="problems" id="problems">
+      <div class="problems__sticky">
+
+        <!-- Center heading -->
+        <h2 class="problems__heading">Is this you?</h2>
+
+        <!-- Left stream -->
+        <div class="problems__stream problems__stream--left">
+          <span class="problem-tag">Late Pickup</span>
+          <span class="problem-tag">Inventory Shortage</span>
+          <span class="problem-tag">Carrier Delay</span>
+          <span class="problem-tag">ETA Drift</span>
+          <span class="problem-tag">Damaged Freight</span>
+          <span class="problem-tag">Customs Hold</span>
+        </div>
+
+        <!-- Right stream -->
+        <div class="problems__stream problems__stream--right">
+          <span class="problem-tag">Warehouse Congestion</span>
+          <span class="problem-tag">Route Disruption</span>
+          <span class="problem-tag">Hub Bottleneck</span>
+          <span class="problem-tag">Demand Spike</span>
+          <span class="problem-tag">Capacity Crunch</span>
+          <span class="problem-tag">Documentation Error</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- We Got You Transition                       -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="we-got-you">
+      <h2 class="we-got-you__heading reveal-slide-up">WE GOT YOU</h2>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- What We Do Bento Grid                       -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="what-we-do" id="what-we-do">
+      <!-- Darkening overlay that intensifies on scroll -->
+      <div class="what-we-do__overlay"></div>
+
+      <div class="what-we-do__sticky-header">
+        <h2 class="what-we-do__title reveal-slide-up">WHAT WE DO</h2>
+      </div>
+
+      <div class="container what-we-do__content">
+        <div class="bento-grid">
+
+          <!-- Bento Box 1 -->
+          <div class="bento-card reveal-slide-up">
+            <h3 class="bento-card__title">Predictive Routing</h3>
+            <p class="bento-card__desc">Anticipate disruptions before they happen with intelligent node pathing.</p>
+            <ul class="feature-list" style="margin-top: 1rem;">
+              <li class="feature-list__item" style="opacity: 1; transform: none; font-size: 0.9rem;">
+                <div class="feature-list__icon"
+                  style="width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Dynamic pathfinding across 10k+ nodes</span>
+              </li>
+              <li class="feature-list__item" style="opacity: 1; transform: none; font-size: 0.9rem;">
+                <div class="feature-list__icon"
+                  style="width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Real-time weather & traffic integration</span>
+              </li>
+              <li class="feature-list__item" style="opacity: 1; transform: none; font-size: 0.9rem;">
+                <div class="feature-list__icon"
+                  style="width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Automated carrier re-assignment</span>
+              </li>
+            </ul>
+            <div style="margin-top: 2rem; display: flex; justify-content: center;">
+              <a href="#" class="glass-btn" style="width: 100%; justify-content: center;">Get Started</a>
+            </div>
+          </div>
+
+          <!-- Bento Box 2 -->
+          <div class="bento-card reveal-slide-up">
+            <h3 class="bento-card__title">Dynamic Allocation</h3>
+            <p class="bento-card__desc">Instantly reallocate resources and capacity to maintain flow and eliminate
+              constraints.</p>
+            <ul class="feature-list" style="margin-top: 1rem;">
+              <li class="feature-list__item" style="opacity: 1; transform: none; font-size: 0.9rem;">
+                <div class="feature-list__icon"
+                  style="width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Automated load balancing</span>
+              </li>
+              <li class="feature-list__item" style="opacity: 1; transform: none; font-size: 0.9rem;">
+                <div class="feature-list__icon"
+                  style="width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Predictive overflow detection</span>
+              </li>
+              <li class="feature-list__item" style="opacity: 1; transform: none; font-size: 0.9rem;">
+                <div class="feature-list__icon"
+                  style="width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Smart spatial inventory management</span>
+              </li>
+            </ul>
+            <div style="margin-top: 2rem; display: flex; justify-content: center;">
+              <a href="#" class="glass-btn" style="width: 100%; justify-content: center;">Get Started</a>
+            </div>
+          </div>
+
+          <!-- Bento Box 3 -->
+          <div class="bento-card reveal-slide-up">
+            <h3 class="bento-card__title">Global Visibility</h3>
+            <p class="bento-card__desc">Achieve true end-to-end transparency across your entire supply chain network.
+            </p>
+            <ul class="feature-list" style="margin-top: 1rem;">
+              <li class="feature-list__item" style="opacity: 1; transform: none; font-size: 0.9rem;">
+                <div class="feature-list__icon"
+                  style="width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Live GPS & satellite tracking</span>
+              </li>
+              <li class="feature-list__item" style="opacity: 1; transform: none; font-size: 0.9rem;">
+                <div class="feature-list__icon"
+                  style="width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Customs clearing ETAs</span>
+              </li>
+              <li class="feature-list__item" style="opacity: 1; transform: none; font-size: 0.9rem;">
+                <div class="feature-list__icon"
+                  style="width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Vendor compliance dashboards</span>
+              </li>
+            </ul>
+            <div style="margin-top: 2rem; display: flex; justify-content: center;">
+              <a href="#" class="glass-btn" style="width: 100%; justify-content: center;">Get Started</a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- Advanced Features Section                   -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="features" id="features">
+      <div class="container">
+
+        <!-- Large Staggered Header -->
+        <div class="features-header">
+          <h2 class="split-text-header">
+            <span class="split-word">Powerful</span>
+            <span class="split-word">Features.</span>
+          </h2>
+        </div>
+
+        <!-- Row 1: Text L, Image R -->
+        <div class="feature-row">
+          <div class="feature-row__content">
+            <h3 class="feature-row__title reveal-slide-up">Predictive Routing</h3>
+            <p class="feature-row__desc reveal-slide-up">
+              Anticipate disruptions before they happen with continuous, AI-driven route optimization and network
+              analysis.
+            </p>
+            <ul class="feature-list">
+              <li class="feature-list__item">
+                <div class="feature-list__icon">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Dynamic pathfinding across 10k+ nodes</span>
+              </li>
+              <li class="feature-list__item">
+                <div class="feature-list__icon">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Real-time weather & traffic integration</span>
+              </li>
+              <li class="feature-list__item">
+                <div class="feature-list__icon">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Automated carrier re-assignment</span>
+              </li>
+            </ul>
+          </div>
+          <div class="feature-row__image reveal-from-right">
+            <img src="assets/predictive_routing.png" alt="Predictive Routing UI" />
+            <div class="glow-backdrop"></div>
+          </div>
+        </div>
+
+        <!-- Row 2: Image L, Text R -->
+        <div class="feature-row feature-row--reverse">
+          <div class="feature-row__content">
+            <h3 class="feature-row__title reveal-slide-up">Dynamic Allocation</h3>
+            <p class="feature-row__desc reveal-slide-up">
+              Instantly reallocate resources and capacity to maintain flow and eliminate costly hub bottlenecks.
+            </p>
+            <ul class="feature-list">
+              <li class="feature-list__item">
+                <div class="feature-list__icon">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Automated load balancing</span>
+              </li>
+              <li class="feature-list__item">
+                <div class="feature-list__icon">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Predictive overflow detection</span>
+              </li>
+              <li class="feature-list__item">
+                <div class="feature-list__icon">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Smart spatial inventory management</span>
+              </li>
+            </ul>
+          </div>
+          <div class="feature-row__image reveal-from-left">
+            <img src="assets/dynamic_allocation.png" alt="Dynamic Allocation UI" />
+            <div class="glow-backdrop"></div>
+          </div>
+        </div>
+
+        <!-- Row 3: Text L, Image R -->
+        <div class="feature-row">
+          <div class="feature-row__content">
+            <h3 class="feature-row__title reveal-slide-up">Global Visibility</h3>
+            <p class="feature-row__desc reveal-slide-up">
+              Achieve true end-to-end transparency across your entire supply chain with real-time tracking and ETAs.
+            </p>
+            <ul class="feature-list">
+              <li class="feature-list__item">
+                <div class="feature-list__icon">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Live GPS & satellite tracking</span>
+              </li>
+              <li class="feature-list__item">
+                <div class="feature-list__icon">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Autonomous anomaly detection</span>
+              </li>
+              <li class="feature-list__item">
+                <div class="feature-list__icon">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 8L6.5 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <span>Supplier-to-customer SLA dashboards</span>
+              </li>
+            </ul>
+          </div>
+          <div class="feature-row__image reveal-from-right">
+            <img src="assets/global_visibility.png" alt="Global Visibility UI" />
+            <div class="glow-backdrop"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- Services Section (Bento Box Grid)           -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="services" id="services">
+      <div class="container">
+
+        <!-- Large Staggered Header -->
+        <div class="features-header">
+          <h2 class="split-text-header" style="margin-bottom: 0;">
+            <span class="split-word">Our</span>
+            <span class="split-word">Services.</span>
+          </h2>
+        </div>
+
+        <div class="bento-grid">
+
+          <!-- Box 1: Balance (Insights) -->
+          <div class="bento-box bento-box--balance">
+            <div class="bento-text">
+              <h3 class="reveal-slide-up">Insights</h3>
+              <p class="reveal-slide-up" style="font-size: 0.85rem; margin-bottom: 20px;">Lorem ipsum dolor sit amet
+                consectetur. Molestie lorem arcu.</p>
+            </div>
+            <div class="bento-graphic reveal-from-left">
+              <div class="bento-pill active">
+                <div class="bento-pill-icon">
+                  <svg width="8" height="8" viewBox="0 0 16 16" fill="white" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="8" width="3" height="8" />
+                    <rect x="7" y="4" width="3" height="12" />
+                    <rect x="12" y="0" width="3" height="16" />
+                  </svg>
+                </div>
+                <span>PER-08</span>
+                <span style="opacity:0.6; margin-left:auto;">Making buying very design sy...</span>
+              </div>
+              <div class="bento-pill">
+                <div class="bento-pill-icon">
+                  <svg width="8" height="8" viewBox="0 0 16 16" fill="white" xmlns="http://www.w3.org/2000/svg"
+                    style="opacity: 0.5;">
+                    <rect x="2" y="8" width="3" height="8" />
+                    <rect x="7" y="4" width="3" height="12" />
+                    <rect x="12" y="0" width="3" height="16" />
+                  </svg>
+                </div>
+                <span>PER-07</span>
+                <span style="opacity:0.6; margin-left:auto;">Create a working prototype</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Box 2: Users -->
+          <div class="bento-box bento-box--users">
+            <div class="bento-text">
+              <h3 class="reveal-slide-up">Users</h3>
+              <p class="reveal-slide-up" style="font-size: 0.85rem; margin-bottom: 20px;">Lorem ipsum dolor sit amet
+                consectetur. Molestie lorem arcu.</p>
+            </div>
+            <div class="bento-graphic reveal-from-right">
+              <div class="bento-card">
+                <div class="bento-card-header">
+                  <span>Total Users</span>
+                  <span style="color: rgba(114, 156, 132, 1);">↗ 6.9%</span>
+                </div>
+                <div class="bento-card-number">72,350</div>
+                <div class="bento-card-chart">
+                  <svg width="100%" height="30" viewBox="0 0 200 30" preserveAspectRatio="none">
+                    <path d="M0 25 Q 20 5, 40 20 T 70 15 T 100 25 T 140 10 T 170 20 T 200 15" fill="none"
+                      stroke="rgba(114, 156, 132, 0.8)" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+                    <path d="M0 25 Q 20 5, 40 20 T 70 15 T 100 25 T 140 10 T 170 20 T 200 15 L 200 30 L 0 30 Z"
+                      fill="url(#chartGrad)"></path>
+                    <defs>
+                      <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="rgba(114, 156, 132, 0.2)" />
+                        <stop offset="100%" stop-color="transparent" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Box 3: Create -->
+          <div class="bento-box bento-box--create">
+            <div class="bento-graphic">
+              <div class="bento-beam reveal-slide-up"></div>
+              <div class="bento-create-icon reveal-slide-up">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Custom intricate icon similar to reference -->
+                  <circle cx="12" cy="12" r="5" fill="white" />
+                  <path
+                    d="M12 2L12 6M12 18L12 22M2 12L6 12M18 12L22 12M4.92 4.92L7.75 7.75M16.25 16.25L19.08 19.08M4.92 19.08L7.75 16.25M16.25 7.75L19.08 4.92"
+                    stroke="white" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </div>
+            </div>
+            <div class="bento-text">
+              <h3 class="reveal-slide-up">Create</h3>
+              <p class="reveal-slide-up" style="font-size: 0.85rem;">Lorem ipsum dolor sit amet consectetur. Molestie
+                lorem arcu.</p>
+            </div>
+          </div>
+
+          <!-- Box 4: AI Sessions -->
+          <div class="bento-box bento-box--ai">
+            <div class="bento-text">
+              <h3 class="reveal-slide-up">AI Sessions</h3>
+              <p class="reveal-slide-up" style="font-size: 0.85rem;">Lorem ipsum dolor sit amet consectetur. Molestie
+                lorem arcu.</p>
+            </div>
+            <div class="bento-graphic reveal-from-left">
+              <div class="bento-ai-graphic">
+                <div class="bento-sidebar">
+                  <div class="bento-sidebar-item active">
+                    <div class="bento-sidebar-icon"></div>
+                    <span>Personal</span>
+                  </div>
+                  <div class="bento-sidebar-item">
+                    <div class="bento-sidebar-icon"></div>
+                    <span>Issues</span>
+                  </div>
+                  <div class="bento-sidebar-item">
+                    <div class="bento-sidebar-icon"></div>
+                    <span>Active</span>
+                  </div>
+                  <div class="bento-sidebar-item" style="margin-top: 10px; opacity: 0.5;">
+                    <span>Projects</span>
+                  </div>
+                  <div class="bento-sidebar-item" style="opacity: 0.5;">
+                    <span>Views</span>
+                  </div>
+                </div>
+                <div class="bento-wand-wrapper">
+                  <div class="bento-sparkle">✦</div>
+                  <div class="bento-wand">🪄</div>
+                  <div class="bento-sparkle">✦</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- Logo Cloud Section                          -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="logo-cloud" id="partners">
+      <div class="container">
+
+        <h2 class="logo-cloud__title reveal-slide-up">
+          <span class="text-muted">Trusted by experts.</span><br />
+          <span class="text-highlight">Used by the leaders.</span>
+        </h2>
+
+        <div class="logo-cloud__divider reveal-slide-up"></div>
+
+        <div class="logo-cloud__slider-container reveal-slide-up">
+          <div class="logo-cloud__slider">
+            <!-- Set 1 -->
+            <img src="https://svgl.app/library/nvidia-wordmark-light.svg" alt="Nvidia Logo" />
+            <img src="https://svgl.app/library/supabase_wordmark_light.svg" alt="Supabase Logo" />
+            <img src="https://svgl.app/library/openai_wordmark_light.svg" alt="OpenAI Logo" />
+            <img src="https://svgl.app/library/turso-wordmark-light.svg" alt="Turso Logo" />
+            <img src="https://svgl.app/library/vercel_wordmark.svg" alt="Vercel Logo" />
+            <img src="https://svgl.app/library/github_wordmark_light.svg" alt="GitHub Logo" />
+            <img src="https://svgl.app/library/claude-ai-wordmark-icon_light.svg" alt="Claude AI Logo" />
+            <img src="https://svgl.app/library/clerk-wordmark-light.svg" alt="Clerk Logo" />
+            <!-- Set 2 for infinite loop -->
+            <img src="https://svgl.app/library/nvidia-wordmark-light.svg" alt="Nvidia Logo" />
+            <img src="https://svgl.app/library/supabase_wordmark_light.svg" alt="Supabase Logo" />
+            <img src="https://svgl.app/library/openai_wordmark_light.svg" alt="OpenAI Logo" />
+            <img src="https://svgl.app/library/turso-wordmark-light.svg" alt="Turso Logo" />
+            <img src="https://svgl.app/library/vercel_wordmark.svg" alt="Vercel Logo" />
+            <img src="https://svgl.app/library/github_wordmark_light.svg" alt="GitHub Logo" />
+            <img src="https://svgl.app/library/claude-ai-wordmark-icon_light.svg" alt="Claude AI Logo" />
+            <img src="https://svgl.app/library/clerk-wordmark-light.svg" alt="Clerk Logo" />
+          </div>
+        </div>
+
+        <div class="logo-cloud__divider reveal-slide-up" style="margin-bottom: var(--space-xl);"></div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- Footer Section                              -->
+    <!-- ═══════════════════════════════════════════ -->
+    <footer class="site-footer">
+      <div class="container footer-container">
+        <!-- Brand Info -->
+        <div class="footer-brand">
+          <div class="footer-logo">STRYDER</div>
+          <p>The next generation of intelligent, AI-powered movement and network architecture.</p>
+        </div>
+
+        <!-- Links container -->
+        <div class="footer-links-group">
+          <div class="footer-column">
+            <h4>Solutions</h4>
+            <ul>
+              <li><a href="#features">Predictive Routing</a></li>
+              <li><a href="#features">Dynamic Allocation</a></li>
+              <li><a href="#features">Global Visibility</a></li>
+            </ul>
+          </div>
+          <div class="footer-column">
+            <h4>Company</h4>
+            <ul>
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">Careers</a></li>
+              <li><a href="#">Press</a></li>
+            </ul>
+          </div>
+          <div class="footer-column">
+            <h4>Contact & Legal</h4>
+            <ul>
+              <li><a href="#">Contact Us</a></li>
+              <li><a href="#">Privacy Policy</a></li>
+              <li><a href="#">Terms of Service</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 STRYDER Inc. All rights reserved.</p>
+      </div>
+    </footer>
+  </div> <!-- /content-layer -->
+
+  <script src="script.js"></script>
+</body>
+
+</html>
