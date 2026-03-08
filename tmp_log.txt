@@ -1,0 +1,334 @@
+commit 5adcef02ea0436d93c616c00991c7481f15232db
+Merge: a362f63 d427474
+Author: gaarth <gaarth.godbole.07@gmail.com>
+Date:   Sun Mar 8 10:20:16 2026 +0530
+
+    merge: accept all UI changes from ui branch
+
+commit d427474c9f64da10933fc4b43e2129907f0ee1df
+Author: siddhantvaidya707070 <siddhantvaidya70@gmail.com>
+Date:   Sun Mar 8 10:16:35 2026 +0530
+
+    Complete agent intelligence, UI polish, and learning hub updates
+
+A	.env.example
+A	.gitattributes
+A	.gitignore
+A	Procfile
+A	backend/__init__.py
+A	backend/agents/__init__.py
+A	backend/agents/actuary.py
+A	backend/agents/base_agent.py
+A	backend/agents/cascade.py
+A	backend/agents/executor.py
+A	backend/agents/orchestrator.py
+A	backend/agents/sentinel.py
+A	backend/agents/strategist.py
+A	backend/config.py
+A	backend/data_pipeline/__init__.py
+A	backend/data_pipeline/clean_pipeline.py
+A	backend/data_pipeline/inspect_datasets.py
+A	backend/data_pipeline/synthetic_generator.py
+A	backend/main.py
+A	backend/ml_models/__init__.py
+A	backend/ml_models/carrier_model.py
+A	backend/ml_models/cascade_model.py
+A	backend/ml_models/delay_model.py
+A	backend/ml_models/eta_model.py
+A	backend/ml_models/hub_congestion_model.py
+A	backend/ml_models/train_all.py
+A	backend/requirements.txt
+A	backend/routers/__init__.py
+A	backend/routers/agents.py
+A	backend/routers/chat.py
+A	backend/routers/dashboard.py
+A	backend/routers/models.py
+A	backend/routers/ops.py
+A	backend/routers/simulation.py
+A	backend/services/__init__.py
+A	backend/services/decision_logger.py
+A	backend/services/learning_service.py
+A	backend/services/model_inference.py
+A	backend/services/supabase_sync.py
+A	backend/simulation/__init__.py
+A	backend/simulation/chaos_engine.py
+A	backend/simulation/ops_state.py
+A	backend/simulation/route_engine.py
+A	backend/simulation/shipment_engine.py
+A	backend/simulation/tick_loop.py
+A	backend/simulation/world_state.py
+A	data/raw/kaggle datasets/DataCo SMART SUPPLY CHAIN FOR BIG DATA ANALYSIS/DataCoSupplyChainDataset.csv
+A	data/raw/kaggle datasets/DataCo SMART SUPPLY CHAIN FOR BIG DATA ANALYSIS/DescriptionDataCoSupplyChain.csv
+A	data/raw/kaggle datasets/DataCo SMART SUPPLY CHAIN FOR BIG DATA ANALYSIS/tokenized_access_logs.csv
+A	data/raw/kaggle datasets/Global Daily Port Activity and Trade Estimates/Daily_Port_Activity_Data_and_Trade_Estimates.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/DATABASE_SCHEMA.txt
+A	data/raw/kaggle datasets/Logistics Operations Database/customers.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/delivery_events.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/driver_monthly_metrics.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/drivers.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/facilities.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/fuel_purchases.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/loads.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/maintenance_records.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/routes.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/safety_incidents.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/trailers.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/trips.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/truck_utilization_metrics.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/trucks.csv
+A	data/raw/kaggle datasets/Maritime Port Performance Dataset/Maritime Port Performance Project Dataset.csv
+A	data/raw/kaggle datasets/Smart Logistics Supply Chain Dataset/smart_logistics_dataset.csv
+A	data/raw/kaggle datasets/Supply Chain Order Delay Risk Analysis/supply_chain_order_fulfillment_delay_risk.csv
+A	data/raw/kaggle datasets/US Logistics Performance Dataset/logistics_shipments_dataset.csv
+A	data/raw/kaggle datasets/US Supply Chain Risk Analysis Dataset/data.csv
+A	frontend/.gitignore
+A	frontend/README.md
+A	frontend/eslint.config.js
+A	frontend/eslint.json
+A	frontend/index.html
+A	frontend/package-lock.json
+A	frontend/package.json
+A	frontend/public/vite.svg
+A	frontend/src/App.css
+A	frontend/src/App.jsx
+A	frontend/src/assets/react.svg
+A	frontend/src/components/AgentPanel.css
+A	frontend/src/components/AgentPanel.jsx
+A	frontend/src/components/AgentTerminal.jsx
+A	frontend/src/components/AgentsLearningHub.css
+A	frontend/src/components/AgentsLearningHub.jsx
+A	frontend/src/components/CRMTable.jsx
+A	frontend/src/components/ChaosPanel.css
+A	frontend/src/components/ChaosPanel.jsx
+A	frontend/src/components/ChatInterface.css
+A	frontend/src/components/ChatInterface.jsx
+A	frontend/src/components/Dashboard.jsx
+A	frontend/src/components/DecisionHistory.css
+A	frontend/src/components/DecisionHistory.jsx
+A	frontend/src/components/ErrorBoundary.jsx
+A	frontend/src/components/EventLog.jsx
+A	frontend/src/components/MetricsFeed.jsx
+A	frontend/src/components/OperationsMap.css
+A	frontend/src/components/OperationsMap.jsx
+A	frontend/src/components/OpsMap.jsx
+A	frontend/src/components/SLAMetrics.css
+A	frontend/src/components/SLAMetrics.jsx
+A	frontend/src/components/ShipmentDetail.jsx
+A	frontend/src/components/StatusStrip.css
+A	frontend/src/components/StatusStrip.jsx
+A	frontend/src/hooks/useData.js
+A	frontend/src/index.css
+A	frontend/src/lib/realtime.js
+A	frontend/src/lib/supabaseClient.js
+A	frontend/src/main.jsx
+A	frontend/src/pages/Dashboard.css
+A	frontend/src/pages/Dashboard.jsx
+A	frontend/src/pages/Terminal.css
+A	frontend/src/pages/Terminal.jsx
+A	frontend/src/services/api.js
+A	frontend/vite.config.js
+M	index.html
+M	package-lock.json
+A	pout.txt
+A	render.yaml
+A	requirements.txt
+M	styles.css
+A	supabase/client.ts
+A	supabase/config.toml
+A	supabase/schema.sql
+A	supabase/seed.sql
+A	supabase/types.ts
+
+commit a362f6387649130def0fdbcc39dd879f3b2f0669
+Merge: 1a4eedb c87af77
+Author: gaarth <gaarth.godbole.07@gmail.com>
+Date:   Sun Mar 8 09:57:54 2026 +0530
+
+    Merge branch 'ui' of https://github.com/gaarth/Stryder-AI
+
+commit 1a4eedb6bd603f114b6a7922787bc59e8d98bc8c
+Author: gaarth <gaarth.godbole.07@gmail.com>
+Date:   Sun Mar 8 08:30:01 2026 +0530
+
+    feat: agent intelligence refactor - ML-backed responses, location queries, prose output, command state
+
+M	backend/agents/orchestrator.py
+M	backend/routers/chat.py
+A	backend/services/model_inference.py
+
+commit 9dc576e305bcc5dc777fed8314e58f5f2dfe3b1e
+Author: gaarth <gaarth.godbole.07@gmail.com>
+Date:   Sun Mar 8 07:43:47 2026 +0530
+
+    fix: harden CORS for production deployment
+
+M	backend/config.py
+M	backend/main.py
+
+commit a126ddf4037cd6c3397975afc89f71620480b369
+Author: gaarth <gaarth.godbole.07@gmail.com>
+Date:   Sun Mar 8 05:53:09 2026 +0530
+
+    backendmvp
+
+A	.env.example
+M	.gitignore
+A	Procfile
+A	backend/agents/__init__.py
+A	backend/agents/actuary.py
+A	backend/agents/base_agent.py
+A	backend/agents/cascade.py
+A	backend/agents/executor.py
+A	backend/agents/orchestrator.py
+A	backend/agents/sentinel.py
+A	backend/agents/strategist.py
+M	backend/config.py
+A	backend/main.py
+A	backend/routers/__init__.py
+A	backend/routers/agents.py
+A	backend/routers/chat.py
+A	backend/routers/dashboard.py
+A	backend/routers/models.py
+A	backend/routers/ops.py
+A	backend/routers/simulation.py
+A	backend/services/__init__.py
+A	backend/services/decision_logger.py
+A	backend/services/learning_service.py
+A	backend/services/supabase_sync.py
+A	backend/simulation/chaos_engine.py
+A	backend/simulation/ops_state.py
+A	backend/simulation/shipment_engine.py
+A	backend/simulation/tick_loop.py
+A	backend/simulation/world_state.py
+A	frontend/.gitignore
+A	frontend/README.md
+A	frontend/eslint.config.js
+A	frontend/index.html
+A	frontend/package-lock.json
+A	frontend/package.json
+A	frontend/public/vite.svg
+A	frontend/src/App.css
+A	frontend/src/App.jsx
+A	frontend/src/assets/react.svg
+A	frontend/src/components/AgentPanel.css
+A	frontend/src/components/AgentPanel.jsx
+A	frontend/src/components/AgentTerminal.jsx
+A	frontend/src/components/CRMTable.jsx
+A	frontend/src/components/ChaosPanel.css
+A	frontend/src/components/ChaosPanel.jsx
+A	frontend/src/components/ChatInterface.css
+A	frontend/src/components/ChatInterface.jsx
+A	frontend/src/components/Dashboard.jsx
+A	frontend/src/components/DecisionHistory.css
+A	frontend/src/components/DecisionHistory.jsx
+A	frontend/src/components/ErrorBoundary.jsx
+A	frontend/src/components/EventLog.jsx
+A	frontend/src/components/MetricsFeed.jsx
+A	frontend/src/components/OperationsMap.css
+A	frontend/src/components/OperationsMap.jsx
+A	frontend/src/components/OpsMap.jsx
+A	frontend/src/components/SLAMetrics.css
+A	frontend/src/components/SLAMetrics.jsx
+A	frontend/src/components/ShipmentDetail.jsx
+A	frontend/src/components/StatusStrip.css
+A	frontend/src/components/StatusStrip.jsx
+A	frontend/src/hooks/useData.js
+A	frontend/src/index.css
+A	frontend/src/lib/realtime.js
+A	frontend/src/lib/supabaseClient.js
+A	frontend/src/main.jsx
+A	frontend/src/pages/Dashboard.css
+A	frontend/src/pages/Dashboard.jsx
+A	frontend/src/pages/Terminal.css
+A	frontend/src/pages/Terminal.jsx
+A	frontend/src/services/api.js
+A	frontend/vite.config.js
+A	render.yaml
+A	requirements.txt
+A	supabase/client.ts
+A	supabase/config.toml
+A	supabase/schema.sql
+A	supabase/seed.sql
+A	supabase/types.ts
+
+commit c87af777ae5e518c6ee529ed3e6cb9f8076f5996
+Author: siddhantvaidya707070 <siddhantvaidya70@gmail.com>
+Date:   Sun Mar 8 03:26:18 2026 +0530
+
+    ui-1
+
+A	assets/dynamic_allocation.png
+A	assets/global_visibility.png
+A	assets/predictive_routing.png
+A	assets/video/bg.mp4
+A	design.md
+A	index.html
+A	package-lock.json
+A	package.json
+A	script.js
+A	styles.css
+
+commit d2d47755fad5d6d5a11ca5094656a16fcec80b99
+Author: gaarth <gaarth.godbole.07@gmail.com>
+Date:   Sat Mar 7 22:59:54 2026 +0530
+
+    backend phase 1
+
+A	.gitignore
+A	backend/__init__.py
+A	backend/config.py
+A	backend/data_pipeline/__init__.py
+A	backend/data_pipeline/clean_pipeline.py
+A	backend/data_pipeline/inspect_datasets.py
+A	backend/data_pipeline/synthetic_generator.py
+A	backend/ml_models/__init__.py
+A	backend/ml_models/carrier_model.py
+A	backend/ml_models/cascade_model.py
+A	backend/ml_models/delay_model.py
+A	backend/ml_models/eta_model.py
+A	backend/ml_models/hub_congestion_model.py
+A	backend/ml_models/train_all.py
+A	backend/requirements.txt
+A	backend/simulation/__init__.py
+A	backend/simulation/route_engine.py
+A	data/raw/kaggle datasets/DataCo SMART SUPPLY CHAIN FOR BIG DATA ANALYSIS/DataCoSupplyChainDataset.csv
+A	data/raw/kaggle datasets/DataCo SMART SUPPLY CHAIN FOR BIG DATA ANALYSIS/DescriptionDataCoSupplyChain.csv
+A	data/raw/kaggle datasets/DataCo SMART SUPPLY CHAIN FOR BIG DATA ANALYSIS/tokenized_access_logs.csv
+A	data/raw/kaggle datasets/Global Daily Port Activity and Trade Estimates/Daily_Port_Activity_Data_and_Trade_Estimates.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/DATABASE_SCHEMA.txt
+A	data/raw/kaggle datasets/Logistics Operations Database/customers.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/delivery_events.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/driver_monthly_metrics.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/drivers.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/facilities.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/fuel_purchases.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/loads.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/maintenance_records.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/routes.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/safety_incidents.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/trailers.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/trips.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/truck_utilization_metrics.csv
+A	data/raw/kaggle datasets/Logistics Operations Database/trucks.csv
+A	data/raw/kaggle datasets/Maritime Port Performance Dataset/Maritime Port Performance Project Dataset.csv
+A	data/raw/kaggle datasets/Smart Logistics Supply Chain Dataset/smart_logistics_dataset.csv
+A	data/raw/kaggle datasets/Supply Chain Order Delay Risk Analysis/supply_chain_order_fulfillment_delay_risk.csv
+A	data/raw/kaggle datasets/US Logistics Performance Dataset/logistics_shipments_dataset.csv
+A	data/raw/kaggle datasets/US Supply Chain Risk Analysis Dataset/data.csv
+
+commit c86bc21f2f77a498a2cc468dc2a46eeca880e048
+Author: Gaarth <gaarth.godbole.07@gmail.com>
+Date:   Sat Mar 7 18:30:53 2026 +0530
+
+    Initial commit
+
+A	README.md
+
+commit 8c15bfab34e574a9de03e8e3ff2558766567343a
+Author: Gaarth <gaarth.godbole.07@gmail.com>
+Date:   Sat Mar 7 18:30:53 2026 +0530
+
+    Initial commit
+
+A	.gitattributes
+A	README.md

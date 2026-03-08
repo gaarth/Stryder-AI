@@ -1,16 +1,17 @@
 """
-STRYDER AI — Sovereign Orchestrator v5
+STRYDER AI — Sovereign Orchestrator v6 :: KILLSWITCH
 =============================================
-Identity: Palantir-grade autonomous operations engine.
-Pipeline: User Query → Intent → Thinking Process → ML Inference → Prose Synthesis
-All responses backed by real data + 5 ML models. Clean terminal prose. No markdown.
+IDENTITY: Palantir-grade autonomous operations engine.
+PROTOCOL: Agent > Dashboard. Decide > Report. Act > Summarize.
 
-Protocols:
-- Sentinel: scans state before answering general queries
-- Strategist: synthesizes, never asks — proposes reroutes proactively
-- Executor: full autonomy — 'fix it' auto-selects the best action
-- Memory: rolling window of discussed shipments for follow-ups
-- Command Absorption: user constraints become permanent decision logic
+KILLSWITCH RULES:
+1. COGNITIVE FILTER: ML scores are INTERNAL. Never dump raw JSON/numbers.
+   Bad:  '@ETA says 31.2h'
+   Good: 'Reroute via Kandla is optimal. ETA reduced by 9 hours. READY FOR EXECUTION.'
+2. TOTAL EXECUTION: 'fix it' = auto-select highest CASCADE risk, filter reroute
+   options internally via ETA + CARRIER, execute the best one, confirm done.
+3. NO SUMMARIES: Never start with 'There are 120 shipments'. Focus on the ANOMALY.
+4. AGENCY > REPORTING: Change the database state, not just the chatbox state.
 """
 import re
 import time
@@ -422,16 +423,16 @@ class AgentOrchestrator:
         return self._prose("System", None, "Give me an instruction to absorb. For example: 'Prioritize Vishakhapatnam exports' or 'Never use FedEx for Kolkata.'")
 
     # ========================================
-    # STATUS QUERY
+    # STATUS QUERY (anomaly-first, no data dumps)
     # ========================================
     def _handle_status(self, clean_msg, ship_ids, ops, target, subtag) -> dict:
         if ship_ids:
             sid = ship_ids[0]
             ship = next((s for s in ops.shipments if s["id"] == sid), None)
             if not ship:
-                return self._prose(target or "System", subtag, "Data not available in current simulation state.")
+                return self._prose(target or "System", subtag, "That shipment does not exist in the current simulation.")
 
-            # Run ML inference on this shipment
+            # Run ML inference INTERNALLY — scores are never shown raw
             from backend.services.model_inference import infer_shipment
             assessment = infer_shipment(ship)
 
@@ -440,155 +441,198 @@ class AgentOrchestrator:
             carrier_info = assessment.get("carrier", {})
             cascade_info = assessment.get("cascade", {})
 
-            eta_pred = eta_info.get("predicted_eta_days", ship["eta_hours"] / 24) if eta_info else ship["eta_hours"] / 24
+            # COGNITIVE FILTER: interpret scores, don't dump them
             delay_prob = delay_info.get("delay_probability", 0) if delay_info else 0
+            cascade_prob = cascade_info.get("cascade_probability", 0) if cascade_info else 0
             carrier_tier = carrier_info.get("tier", "STANDARD") if carrier_info else "STANDARD"
+            eta_pred = eta_info.get("predicted_eta_days", ship["eta_hours"] / 24) if eta_info else ship["eta_hours"] / 24
 
-            # Build prose
+            # Strategic conclusion, not a data dump
             status_word = "en route" if ship["status"] == "IN_TRANSIT" else ship["status"].lower()
-            lines = [
-                f"Shipment #{sid} is {status_word} from {ship['origin']} to {ship['destination']} "
-                f"via {ship['carrier']} ({carrier_tier} tier)."
-            ]
+            lines = [f"Shipment #{sid}: {ship['origin']} to {ship['destination']}, {status_word} via {ship['carrier']}."]
 
-            lines.append(f"@ETA_AGENT predicts {eta_pred:.1f} days ({ship['eta_hours']}h remaining). "
-                          f"Current cost: INR {round(ship['current_cost']):,}.")
-
-            if delay_prob > 0.5:
-                lines.append(f"@DELAY_AGENT flags elevated risk ({delay_prob:.0%} delay probability). "
-                              f"Penalty rate: INR {ship['delay_penalty_per_hour']:,.0f}/hr.")
+            # Only surface what MATTERS
+            if cascade_prob > 0.7:
+                lines.append(f"CRITICAL: This shipment is at high cascade risk. Immediate reroute recommended. Say 'fix it' to execute.")
+            elif delay_prob > 0.5:
+                lines.append(f"WARNING: Elevated delay risk detected. {carrier_tier}-tier carrier may be insufficient for this corridor.")
+                lines.append(f"Recommended action: carrier switch or expedited routing. Say 'fix shipment {sid}' to intervene.")
             elif delay_prob > 0.3:
-                lines.append(f"@DELAY_AGENT: moderate delay risk ({delay_prob:.0%}).")
+                lines.append(f"Moderate risk. Monitoring. ETA holds at {eta_pred:.1f} days but corridor pressure is building.")
             else:
-                lines.append(f"@DELAY_AGENT: delay risk is low ({delay_prob:.0%}).")
-
-            if cascade_info and cascade_info.get("severity") in ("HIGH", "CRITICAL"):
-                lines.append(f"@CASCADE_MODEL: {cascade_info['severity']} cascade risk detected.")
+                lines.append(f"On track. ETA holds at {eta_pred:.1f} days. No intervention needed.")
 
             if ship.get("disrupted"):
-                lines.append(f"This shipment was affected by a disruption (ID: {ship.get('disruption_id')}).")
+                lines.append(f"Note: this shipment was hit by a disruption event. Recovery is {'in progress' if ship['status'] == 'IN_TRANSIT' else 'stalled'}.")
 
-            return self._prose(target or "ETA Agent", subtag, "\n".join(lines),
+            return self._prose(target or "Strategist", subtag, "\n".join(lines),
                                thinking=True, models=["ETA_AGENT", "DELAY_AGENT", "CARRIER_AGENT", "CASCADE_MODEL"])
 
-        # Sentinel scan / general status
-        if target == "Sentinel" or "scan" in clean_msg.lower() or "monitor" in clean_msg.lower():
+        # Sentinel scan — ANOMALY FIRST, not a dashboard summary
+        if target == "Sentinel" or "scan" in clean_msg.lower() or "monitor" in clean_msg.lower() or "anomal" in clean_msg.lower():
             alerts = ops.sentinel_scan()
             stats = ops.get_snapshot()["stats"]
-            disruptions = stats["active_disruptions"]
 
-            summary = f"{stats['in_transit']} shipments in transit, {stats['delayed']} delayed"
-            if disruptions:
-                summary += f" across {disruptions} active disruption{'s' if disruptions > 1 else ''}"
-            summary += "."
+            # Run cascade inference to find real threats
+            from backend.services.model_inference import infer_shipment
+            threats = []
+            for s in ops.shipments:
+                if s["status"] in ("IN_TRANSIT", "DELAYED"):
+                    assessment = infer_shipment(s)
+                    cascade_p = assessment.get("cascade", {}).get("cascade_probability", 0)
+                    if cascade_p > 0.5:
+                        threats.append((s, cascade_p))
+            threats.sort(key=lambda x: x[1], reverse=True)
 
-            lines = [summary]
-
-            if alerts:
-                lines.append("Anomalies detected:")
-                for a in alerts[:4]:
-                    lines.append(f"  {a}")
+            if threats:
+                lines = [f"{len(threats)} shipment{'s' if len(threats) > 1 else ''} flagged as cascade risk:"]
+                for ship, prob in threats[:4]:
+                    severity = "CRITICAL" if prob > 0.7 else "HIGH"
+                    lines.append(f"  #{ship['id']} {ship['origin']} to {ship['destination']} [{severity}] — intervention recommended")
+                lines.append(f"\n{stats['delayed']} delayed, {stats['active_disruptions']} active disruptions.")
+                lines.append("Say 'fix it' and I will handle the most critical one.")
+            elif stats["delayed"] > 0:
+                lines = [f"{stats['delayed']} shipments delayed but cascade risk is contained."]
+                if alerts:
+                    for a in alerts[:3]:
+                        lines.append(f"  {a}")
+                lines.append("Monitoring. No autonomous action required yet.")
             else:
-                lines.append("All systems nominal. No anomalies detected.")
+                lines = ["All clear. No anomalies, no cascade threats, no delays. Grid is stable."]
 
-            # Check command state priorities
+            # Priority watch
             if self._command_state["focus_locations"]:
                 for loc_id in self._command_state["focus_locations"]:
                     from backend.simulation.ops_state import CITIES
                     loc = CITIES.get(loc_id, {})
                     loc_ships = [s for s in ops.shipments if s.get("destination_id") == loc_id and s["status"] == "IN_TRANSIT"]
                     if loc_ships:
-                        lines.append(f"Priority watch: {loc.get('name', loc_id)} has {len(loc_ships)} incoming shipments.")
+                        lines.append(f"Priority watch: {loc.get('name', loc_id)} — {len(loc_ships)} inbound.")
 
-            return self._prose("Sentinel", subtag, "\n".join(lines))
+            return self._prose("Sentinel", subtag, "\n".join(lines),
+                               thinking=True, models=["CASCADE_MODEL", "DELAY_AGENT"])
 
-        # General overview
+        # General query — still anomaly-first
         stats = ops.get_snapshot()["stats"]
-        strategy = ops.agent_memory.get("global_strategy", "balanced").upper()
-        lines = [
-            f"{stats['total']} total shipments: {stats['in_transit']} in transit, "
-            f"{stats['delayed']} delayed, {stats['delivered']} delivered.",
-            f"Active disruptions: {stats['active_disruptions']}. Strategy: {strategy}.",
-        ]
-        return self._prose("System", subtag, "\n".join(lines))
+        if stats["delayed"] > 0 or stats["active_disruptions"] > 0:
+            return self._prose("Sentinel", subtag,
+                f"{stats['delayed']} delayed, {stats['active_disruptions']} disruptions active. "
+                f"Say '@Sentinel scan' for threat assessment or 'fix it' for autonomous intervention.")
+        return self._prose("Sentinel", subtag,
+            f"Grid stable. {stats['in_transit']} in transit, 0 anomalies. Strategy: {ops.agent_memory.get('global_strategy', 'balanced').upper()}.")
 
     # ========================================
-    # FIX REQUEST (full autonomy mode)
+    # FIX REQUEST (KILLSWITCH: total execution autonomy)
     # ========================================
     def _handle_fix(self, message, clean_msg, ship_ids, ops, target, subtag) -> dict:
+        # Apply a previously shown option
         apply_match = re.search(r'apply\s+option\s+(\d+)', message, re.IGNORECASE)
         if apply_match:
             opt_idx = int(apply_match.group(1))
             sid = self._last_optimize_id or (ship_ids[0] if ship_ids else None)
             if not sid:
-                return self._prose("Executor", subtag, "No pending optimization context. Run an optimization first, then I can apply.")
+                return self._prose("Executor", subtag, "No pending context. Say 'fix it' and I will find the target myself.")
             result = ops.apply_option(sid, opt_idx)
             if "error" in result:
                 return self._prose("Executor", subtag, result["error"])
-            ops.add_learning("Executor", f"Applied option {opt_idx} to shipment #{sid}: {result['applied']}")
+            ops.add_learning("Executor", f"Applied option {opt_idx} to #{sid}: {result['applied']}")
             return self._prose("Executor", subtag,
-                f"@Executor applied {result['applied']} to shipment #{sid}. "
-                f"ETA: {result['old_eta']}h down to {result['new_eta']}h. "
-                f"Cost: INR {result['old_cost']:,} to INR {result['new_cost']:,}.",
-                thinking=True, models=["ETA_AGENT"])
+                f"Action complete. Shipment #{sid} rerouted: {result['applied']}. "
+                f"ETA cut from {result['old_eta']}h to {result['new_eta']}h. Supply chain state healed.",
+                thinking=True, models=["ETA_AGENT", "CARRIER_AGENT"])
 
-        # ── AUTONOMOUS FIX: "fix it" without specifying a shipment ──
-        if not ship_ids and ("fix it" in clean_msg.lower() or "fix this" in clean_msg.lower() or clean_msg.lower().strip() in ["fix", "fix it", "fix this"]):
-            # Auto-find the most critical failing shipment
-            delayed = [s for s in ops.shipments if s["status"] == "DELAYED"]
-            disrupted = [s for s in ops.shipments if s.get("disrupted") and s["status"] != "DELIVERED"]
-            critical = disrupted or delayed
-            if not critical:
-                return self._prose("Executor", subtag, "All shipments are currently on track. Nothing to fix.")
-            # Pick the one with highest cost impact
-            worst = max(critical, key=lambda s: s["current_cost"] - s["base_cost"])
+        # ── KILLSWITCH: "fix it" / "execute" / "fix" ──
+        fix_triggers = ["fix it", "fix this", "execute", "fix", "heal", "resolve"]
+        is_fix_all = not ship_ids and any(t in clean_msg.lower().strip() for t in fix_triggers)
+
+        if is_fix_all:
+            # Step 1: IDENTIFY — rank ALL at-risk shipments by CASCADE score
+            from backend.services.model_inference import infer_shipment
+            candidates = [s for s in ops.shipments if s["status"] in ("IN_TRANSIT", "DELAYED")]
+            if not candidates:
+                return self._prose("Executor", subtag, "Grid is clean. All shipments delivered or on track. Nothing to kill.")
+
+            scored = []
+            for s in candidates:
+                assessment = infer_shipment(s)
+                cascade_p = assessment.get("cascade", {}).get("cascade_probability", 0)
+                delay_p = assessment.get("delay", {}).get("delay_probability", 0)
+                # Combined severity: cascade weighted 2x
+                severity = (cascade_p * 2) + delay_p + (0.3 if s.get("disrupted") else 0)
+                scored.append((s, severity, assessment))
+
+            scored.sort(key=lambda x: x[1], reverse=True)
+            worst, severity, assessment = scored[0]
+
+            if severity < 0.2:
+                return self._prose("Executor", subtag, "All shipments are within acceptable risk. No anomaly to kill.")
+
             sid = worst["id"]
             self._active_shipment_id = sid
-            # Attempt optimization and auto-apply best option
+
+            # Step 2: FILTER — compare reroute options internally using ETA + CARRIER
             result = ops.optimize_eta(sid)
             if "error" in result:
-                return self._prose("Executor", subtag, f"Identified shipment #{sid} as critical but: {result['error']}")
-            # Auto-apply option 1
+                return self._prose("Executor", subtag,
+                    f"Target acquired: #{sid} ({worst['origin']} to {worst['destination']}). "
+                    f"But: {result['error']}",
+                    thinking=True, models=["CASCADE_MODEL", "ETA_AGENT"])
+
+            # Step 3: ACT — auto-apply the best option (option 1)
             apply_result = ops.apply_option(sid, 1)
             if "error" in apply_result:
-                # Fall back to showing options
                 self._last_optimize_id = sid
-                lines = [f"Shipment #{sid} is the most critical ({worst['origin']} to {worst['destination']}, {worst['status']})."]
-                for opt in result["options"]:
-                    lines.append(f"Option {opt['index']}: {opt['description']} (saves {opt['eta_saved']}h, +INR {opt['cost_increase']:,})")
-                lines.append("Say 'Apply option 1' to execute.")
-                return self._prose("Executor", subtag, "\n".join(lines), thinking=True, models=["ETA_AGENT", "DELAY_AGENT"])
+                return self._prose("Executor", subtag,
+                    f"Target: #{sid} ({worst['origin']} to {worst['destination']}). "
+                    f"Could not auto-execute. Best available: {result['options'][0]['description']}. "
+                    f"Say 'apply option 1' to force.",
+                    thinking=True, models=["CASCADE_MODEL", "ETA_AGENT", "CARRIER_AGENT"])
 
-            ops.add_learning("Executor", f"Auto-fixed shipment #{sid}: {apply_result['applied']}")
+            # Step 4: CONFIRM — state healed
+            ops.add_learning("Executor", f"KILLSWITCH: auto-healed #{sid} via {apply_result['applied']}")
             return self._prose("Executor", subtag,
-                f"Identified #{sid} as the most critical shipment ({worst['origin']} to {worst['destination']}). "
-                f"@Executor auto-applied: {apply_result['applied']}. "
-                f"ETA improved from {apply_result['old_eta']}h to {apply_result['new_eta']}h. "
-                f"Cost adjusted from INR {apply_result['old_cost']:,} to INR {apply_result['new_cost']:,}.",
-                thinking=True, models=["ETA_AGENT", "DELAY_AGENT", "CASCADE_MODEL"])
+                f"Action complete. Shipment #{sid} ({worst['origin']} to {worst['destination']}) rerouted. "
+                f"{apply_result['applied']}. ETA: {apply_result['old_eta']}h down to {apply_result['new_eta']}h. "
+                f"Supply chain state healed.",
+                thinking=True, models=["CASCADE_MODEL", "ETA_AGENT", "DELAY_AGENT", "CARRIER_AGENT"])
 
+        # Fix a specific shipment by ID
         if ship_ids:
             sid = ship_ids[0]
             ship = next((s for s in ops.shipments if s["id"] == sid), None)
             if not ship:
-                return self._prose("Executor", subtag, "Data not available in current simulation state.")
+                return self._prose("Executor", subtag, "That shipment does not exist.")
+            if ship["status"] == "DELIVERED":
+                return self._prose("Executor", subtag, f"Shipment #{sid} already delivered. Nothing to fix.")
+
             if "carrier" in clean_msg.lower() or "switch" in clean_msg.lower():
                 result = ops.execute_command("SWITCH_CARRIER", {"shipment_id": sid, "carrier": "BlueDart"})
                 if result.get("ok"):
-                    ops.add_learning("Executor", f"Switched carrier for #{sid}: {result['old_carrier']} to {result['new_carrier']}")
+                    ops.add_learning("Executor", f"Carrier switch #{sid}: {result['old_carrier']} to {result['new_carrier']}")
                     return self._prose("Executor", subtag,
-                        f"@Executor switched carrier for shipment #{sid} from {result['old_carrier']} to {result['new_carrier']}.")
-            # Auto-optimize this shipment
+                        f"Done. Shipment #{sid} carrier switched from {result['old_carrier']} to {result['new_carrier']}. State updated.",
+                        thinking=True, models=["CARRIER_AGENT"])
+
+            # Auto-optimize and execute best option
             result = ops.optimize_eta(sid)
             if "error" not in result:
+                apply_result = ops.apply_option(sid, 1)
+                if "error" not in apply_result:
+                    ops.add_learning("Executor", f"Auto-fixed #{sid}: {apply_result['applied']}")
+                    return self._prose("Executor", subtag,
+                        f"Action complete. Shipment #{sid} rerouted: {apply_result['applied']}. "
+                        f"ETA cut from {apply_result['old_eta']}h to {apply_result['new_eta']}h. State healed.",
+                        thinking=True, models=["ETA_AGENT", "CARRIER_AGENT"])
+                # Fallback: show options
                 self._last_optimize_id = sid
-                lines = [f"Shipment #{sid} ({ship['origin']} to {ship['destination']}, {ship['status']})."]
-                for opt in result["options"]:
-                    lines.append(f"Option {opt['index']}: {opt['description']} (saves {opt['eta_saved']}h, +INR {opt['cost_increase']:,})")
-                lines.append("Say 'Apply option 1' to execute.")
-                return self._prose("Executor", subtag, "\n".join(lines), thinking=True, models=["ETA_AGENT"])
+                best = result['options'][0]
+                return self._prose("Executor", subtag,
+                    f"Shipment #{sid}: best option is {best['description']} (saves {best['eta_saved']}h). "
+                    f"Say 'apply option 1' to execute.",
+                    thinking=True, models=["ETA_AGENT"])
 
-        return self._prose("Executor", subtag, "I need a target. Tell me which shipment to fix, or just say 'fix it' and I will handle the most critical one.")
+        # No target given and not a fix-all command
+        return self._prose("Executor", subtag, "Say 'fix it' and I will find and kill the worst anomaly. Or specify: 'fix shipment 13'.")
 
     # ========================================
     # OPTIMIZATION REQUEST (ML-backed)
@@ -746,27 +790,34 @@ class AgentOrchestrator:
     # THINKING PROCESS (internal monologue)
     # ========================================
     def _build_thinking(self, models: list) -> str:
-        """Build thinking process block showing which sub-agents are being consulted."""
+        """Concise thinking tag for the frontend animation."""
         if not models:
             return ""
         tags = ", ".join(f"@{m}" for m in models)
-        return f"[Thinking: consulting {tags}]"
+        return f"[Consulting {tags}]"
 
     # ========================================
-    # OUTPUT (clean terminal prose, no markdown)
+    # OUTPUT :: COGNITIVE FILTER
+    # No raw ML scores. No markdown. Strategic conclusions only.
     # ========================================
     def _prose(self, agent: str, subtag: Optional[str], response, thinking=False, models=None) -> dict:
         if isinstance(response, dict):
             text = response.get("response", str(response))
         else:
             text = str(response)
-        # Strip markdown artifacts — clean terminal prose only
-        text = text.replace("**", "").replace("##", "").replace("# ", "").replace("---", "")
 
-        # Prepend thinking block when ML models were consulted
+        # COGNITIVE FILTER: strip raw score patterns
+        text = text.replace("**", "").replace("##", "").replace("# ", "").replace("---", "")
+        # Kill patterns like "(0.342)" or "probability: 0.87" in output
+        text = re.sub(r'\(\d+\.\d{2,}\)', '', text)
+        text = re.sub(r'probability[: ]+\d+\.\d+', '', text)
+        text = re.sub(r'score[: ]+\d+\.\d+', '', text)
+        text = re.sub(r'\s{2,}', ' ', text).strip()
+
+        # Prepend thinking tag (concise)
         thinking_block = self._build_thinking(models or [])
         if thinking_block:
-            text = f"{thinking_block}\n\n{text}"
+            text = f"{thinking_block}\n{text}"
 
         return {
             "agent": agent,
