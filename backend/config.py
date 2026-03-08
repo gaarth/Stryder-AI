@@ -26,10 +26,10 @@ GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 # --- Backend ---
 BACKEND_HOST = os.getenv("HOST", "0.0.0.0")
 BACKEND_PORT = int(os.getenv("PORT", "8000"))
-CORS_ORIGINS = os.getenv(
-    "BACKEND_CORS_ORIGINS",
-    "http://localhost:3000,http://localhost:5173"
-).split(",")
+
+# Parse CORS origins — strip whitespace, remove empty entries
+_raw_cors = os.getenv("BACKEND_CORS_ORIGINS", "http://localhost:3000,http://localhost:5173")
+CORS_ORIGINS = [origin.strip() for origin in _raw_cors.split(",") if origin.strip()]
 
 # --- Paths ---
 DATA_RAW_DIR = PROJECT_ROOT / "data" / "raw" / "kaggle datasets"

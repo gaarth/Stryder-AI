@@ -22,13 +22,21 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS
+# CORS — build final origins list (deduplicated)
+_all_origins = set(CORS_ORIGINS)
+_all_origins.add("http://localhost:3000")
+_all_origins.add("http://localhost:5173")
+ALLOWED_ORIGINS = sorted(_all_origins)
+print(f"[STRYDER AI] CORS allowed origins: {ALLOWED_ORIGINS}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS + ["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,  # cache preflight for 10 min
 )
 
 # ============================================================
