@@ -1,46 +1,130 @@
 /**
- * Dashboard v3 — Three vertical sections:
- * 1. AGENT LEARNING LOGS (chronological, not grouped by agent)
- * 2. CASCADE INTELLIGENCE CENTER (predictions + historical alerts)
- * 3. AGENT REPLAY SYSTEM (past events with step-by-step replay + map animation)
+ * Dashboard v4 — Three horizontal sections (Left, Center, Right):
+ * Left: CASCADE INTELLIGENCE CENTER (predictions + historical alerts)
+ * Center: AGENT LEARNING LOGS (chronological, not grouped by agent)
+ * Right: AGENT REPLAY SYSTEM (past events with step-by-step replay + map animation)
+ * 
+ * Aesthetic: Cinematic Futurist, Glassmorphism, Syne headers, Inter body, Green/White theme.
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
+function AnimatedNumber({ value, prefix = '', suffix = '', duration = 1500 }) {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        let startTimestamp = null;
+        let animationFrameId;
+
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+            setCount(easeProgress * value);
+
+            if (progress < 1) {
+                animationFrameId = window.requestAnimationFrame(step);
+            }
+        };
+        animationFrameId = window.requestAnimationFrame(step);
+
+        return () => window.cancelAnimationFrame(animationFrameId);
+    }, [value, duration]);
+
+    const displayValue = count.toLocaleString(undefined, {
+        maximumFractionDigits: Number.isInteger(value) ? 0 : 1,
+        minimumFractionDigits: Number.isInteger(value) ? 0 : 1
+    });
+
+    return <span>{prefix}{displayValue}{suffix}</span>;
+}
+
+// Unified agent colors strictly bounded to our aesthetic (shades of dark, glass, emerald, cyan, white)
 const AGENT_COLORS = {
-    Sentinel: '#ef4444', Strategist: '#8b5cf6', Actuary: '#f59e0b',
-    Executor: '#22c55e', Cascade: '#06b6d4', System: '#8b5cf6',
+    Sentinel: '#ffffff', Strategist: '#00ff87', Actuary: '#60efff',
+    Executor: '#1fb96a', Cascade: '#ffffff', System: '#00ff87',
 };
 
 export default function Dashboard({ agentStats, agentMemory, eventLog, cascadeAlerts, learningLogs, scenarioHistory, onCascadeFix }) {
     const [replayEvent, setReplayEvent] = useState(null);
     const [expandedLog, setExpandedLog] = useState(null);
+    const [loaded, setLoaded] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setLoaded(true), 50);
+        return () => clearTimeout(timer);
+    }, []);
 
     return (
-        <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div style={{
+            width: '100%', minHeight: '100%', display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(350px, 1.5fr) minmax(300px, 1fr)', gap: 32, padding: '32px',
+            opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(30px)', transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}>
 
-            {/* ════════ SECTION 1: AGENT LEARNING LOGS ════════ */}
-            <Section title="AGENT LEARNING LOGS" icon="📋" color="#8b5cf6" count={learningLogs.length}>
+            {/* ════════ LEFT: CASCADE INTELLIGENCE CENTER ════════ */}
+            <Section title="CASCADE INTELLIGENCE CENTER" icon="//" count={cascadeAlerts.length}>
+                {/* Active predictions */}
+                {cascadeAlerts.length === 0
+                    ? <Empty text="No cascade risks detected. System stable." />
+                    : cascadeAlerts.map((a, i) => (
+                        <div key={i} className="dashboard-card" style={{ marginBottom: 12 }}>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: '#e0e0e0', marginBottom: 8 }}>
+                                    Predicted: {a.location}
+                                    <span style={{
+                                        marginLeft: 8, fontSize: 10, padding: '2px 6px', borderRadius: 4,
+                                        background: 'rgba(255, 255, 255, 0.1)', color: 'var(--accent)', fontWeight: 700, fontFamily: 'var(--font-sans)'
+                                    }}><AnimatedNumber value={a.confidence} suffix="% confidence" /></span>
+                                </div>
+                                <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, fontFamily: 'var(--font-sans)' }}>
+                                    {a.type.replace(/_/g, ' ').toUpperCase()}<br />
+                                    <span style={{ color: 'var(--text-muted)' }}><AnimatedNumber value={a.impact_count} suffix=" shipments at risk" /></span><br />
+                                    Suggestion: <span style={{ color: 'var(--accent)' }}>{a.suggestion}</span>
+                                </div>
+                            </div>
+                            <div style={{ marginTop: 12, textAlign: 'right' }}>
+                                <button onClick={() => onCascadeFix?.(a)} className="glass-btn" style={{ padding: '6px 16px', fontSize: 11 }}>
+                                    FIX RESOLUTION →
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                }
+
+                {/* Scenario history */}
+                {scenarioHistory?.length > 0 && (
+                    <div style={{ marginTop: 24 }}>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, marginBottom: 12 }}>SCENARIO HISTORY</div>
+                        {scenarioHistory.map((s, i) => (
+                            <div key={i} className="dashboard-card-mini" style={{ marginBottom: 8, display: 'flex', gap: 12, justifyContent: 'space-between', fontSize: 11, fontFamily: 'var(--font-sans)' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>{s.description}</span>
+                                <span style={{ color: 'var(--text-muted)' }}>{s.location}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </Section>
+
+            {/* ════════ CENTER: AGENT LEARNING LOGS ════════ */}
+            <Section title="AGENT LEARNING LOGS" icon="//" count={learningLogs.length}>
                 {/* Cumulative stats row */}
-                <div style={{ display: 'flex', gap: 16, padding: '12px 16px', background: '#161616', borderRadius: 6, border: '1px solid #222', marginBottom: 12 }}>
-                    <Stat label="Hours Saved" value={agentMemory.total_hours_saved || 0} suffix="h" color="#22c55e" />
-                    <Stat label="Cost Saved" value={`₹${(agentMemory.total_cost_saved || 0).toLocaleString()}`} color="#3b82f6" />
-                    <Stat label="Optimizations" value={agentMemory.optimizations || 0} color="#8b5cf6" />
-                    <Stat label="Strategy" value={(agentMemory.strategy || 'balanced').toUpperCase()} color="#f59e0b" />
+                <div style={{ display: 'flex', gap: 16, padding: '16px', background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur))', borderRadius: 'var(--radius)', border: '1px solid var(--glass-border)', marginBottom: 24 }}>
+                    <Stat label="Hours Saved" value={agentMemory.total_hours_saved || 0} suffix="h" />
+                    <Stat label="Cost Saved" value={agentMemory.total_cost_saved || 0} prefix="$" />
+                    <Stat label="Optimizations" value={agentMemory.optimizations || 0} />
                 </div>
 
                 {/* Agent stats cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8, marginBottom: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
                     {Object.entries(agentStats).map(([name, data]) => (
-                        <div key={name} style={{
-                            padding: '10px 12px', background: '#1a1a1a', borderRadius: 6,
-                            border: '1px solid #2a2a2a', borderTop: `2px solid ${AGENT_COLORS[name] || '#555'}`,
-                        }}>
-                            <div style={{ fontWeight: 700, fontSize: 10, color: AGENT_COLORS[name] || '#888', letterSpacing: 1, marginBottom: 6 }}>{name}</div>
+                        <div key={name} className="dashboard-card-mini">
+                            <div style={{ fontFamily: 'var(--font-sans)', fontStyle: 'italic', fontWeight: 800, fontSize: 15, color: 'var(--text-primary)', letterSpacing: 1, marginBottom: 8 }}>{name}</div>
                             {Object.entries(data).map(([k, v]) => (
-                                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, padding: '1px 0', color: '#888' }}>
+                                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, padding: '2px 0', color: 'var(--text-secondary)', fontFamily: 'var(--font-sans)' }}>
                                     <span>{k.replace(/_/g, ' ')}</span>
-                                    <span style={{ color: '#ccc', fontWeight: 600 }}>
-                                        {typeof v === 'number' ? (k.includes('rate') || k.includes('accuracy') || k.includes('error') ? `${v}%` : v.toLocaleString()) : v || '—'}
+                                    <span style={{ color: 'var(--text)', fontWeight: 600 }}>
+                                        {typeof v === 'number' ? (
+                                            <AnimatedNumber value={v} suffix={k.includes('rate') || k.includes('accuracy') || k.includes('error') ? '%' : ''} />
+                                        ) : v || '—'}
                                     </span>
                                 </div>
                             ))}
@@ -49,100 +133,45 @@ export default function Dashboard({ agentStats, agentMemory, eventLog, cascadeAl
                 </div>
 
                 {/* Chronological learning logs */}
-                <div style={{ maxHeight: 300, overflowY: 'auto', borderRadius: 6, border: '1px solid #222' }}>
+                <div style={{ flex: 1, minHeight: 400, overflowY: 'auto', borderRadius: 'var(--radius)', border: '1px solid var(--glass-border)' }} className="custom-scroll">
                     {learningLogs.length === 0
                         ? <Empty text="No learnings yet. Interact with agents to generate learning logs." />
                         : [...learningLogs].reverse().map((log, i) => (
                             <div key={log.id || i}
                                 onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)}
+                                className="dashboard-log-item"
                                 style={{
-                                    padding: '8px 14px', borderBottom: '1px solid #1a1a1a',
-                                    background: i % 2 === 0 ? '#161616' : '#1a1a1a',
-                                    cursor: 'pointer', transition: 'background .1s',
-                                    display: 'flex', alignItems: 'flex-start', gap: 10,
+                                    padding: '24px 24px', borderBottom: '1px solid var(--glass-border)',
+                                    background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)',
+                                    cursor: 'pointer', transition: 'background .2s',
+                                    display: 'flex', alignItems: 'flex-start', gap: 16,
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.background = '#222'}
-                                onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? '#161616' : '#1a1a1a'}>
-                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#555', whiteSpace: 'nowrap', marginTop: 1 }}>[{log.ts}]</span>
+                            >
+                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap', marginTop: 2 }}>[{log.ts}]</span>
                                 <span style={{
-                                    fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700,
-                                    color: AGENT_COLORS[log.agent] || '#888', minWidth: 70, whiteSpace: 'nowrap',
+                                    fontFamily: 'var(--font-sans)', fontStyle: 'italic', fontSize: 16, fontWeight: 800,
+                                    color: 'var(--text-primary)',
+                                    minWidth: 80, whiteSpace: 'nowrap',
                                 }}>{log.agent}</span>
-                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#ccc', lineHeight: 1.4 }}>{log.message}</span>
+                                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{log.message}</span>
                             </div>
                         ))
                     }
                 </div>
             </Section>
 
-            {/* ════════ SECTION 2: CASCADE INTELLIGENCE CENTER ════════ */}
-            <Section title="CASCADE INTELLIGENCE CENTER" icon="⚠" color="#f59e0b" count={cascadeAlerts.length}>
-                {/* Active predictions */}
-                {cascadeAlerts.length === 0
-                    ? <Empty text="No cascade risks detected. System stable." />
-                    : cascadeAlerts.map((a, i) => (
-                        <div key={i} style={{
-                            padding: '14px 16px', background: '#1a1a1a', border: '1px solid #2a2a2a',
-                            borderLeft: `3px solid ${a.confidence > 70 ? '#ef4444' : '#f59e0b'}`,
-                            borderRadius: 6, marginBottom: 8, display: 'flex', alignItems: 'flex-start', gap: 16,
-                        }}>
-                            <div style={{ flex: 1 }}>
-                                <div style={{ fontWeight: 700, fontSize: 12, color: '#e0e0e0', marginBottom: 4 }}>
-                                    Predicted: {a.location}
-                                    <span style={{
-                                        marginLeft: 8, fontSize: 9, padding: '1px 6px', borderRadius: 3,
-                                        background: a.confidence > 75 ? '#ef444418' : '#f59e0b18',
-                                        color: a.confidence > 75 ? '#ef4444' : '#f59e0b', fontWeight: 700,
-                                    }}>{a.confidence}% confidence</span>
-                                </div>
-                                <div style={{ fontSize: 11, color: '#888', lineHeight: 1.6 }}>
-                                    {a.type.replace(/_/g, ' ').toUpperCase()}<br />
-                                    {a.impact_count} shipments at risk<br />
-                                    Suggestion: {a.suggestion}
-                                </div>
-                            </div>
-                            <button onClick={() => onCascadeFix?.(a)} style={{
-                                fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700,
-                                padding: '8px 16px', background: '#22c55e11', border: '1px solid #22c55e44',
-                                borderRadius: 4, color: '#22c55e', cursor: 'pointer', whiteSpace: 'nowrap',
-                            }}>FIX →</button>
-                        </div>
-                    ))
-                }
-
-                {/* Scenario history */}
-                {scenarioHistory?.length > 0 && (
-                    <div style={{ marginTop: 16 }}>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#666', letterSpacing: 1, marginBottom: 8 }}>SCENARIO HISTORY</div>
-                        {scenarioHistory.map((s, i) => (
-                            <div key={i} style={{ padding: '8px 14px', background: '#161616', borderRadius: 4, marginBottom: 4, borderLeft: '2px solid #f59e0b44', display: 'flex', gap: 12, justifyContent: 'space-between', fontSize: 10, fontFamily: 'var(--font-mono)', color: '#888' }}>
-                                <span style={{ color: '#ccc' }}>{s.description}</span>
-                                <span>{s.location}</span>
-                                <span>{s.affected_count} affected</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </Section>
-
-            {/* ════════ SECTION 3: AGENT REPLAY SYSTEM ════════ */}
-            <Section title="AGENT REPLAY SYSTEM" icon="↻" color="#06b6d4" count={eventLog.length}>
+            {/* ════════ RIGHT: AGENT REPLAY SYSTEM ════════ */}
+            <Section title="AGENT REPLAY SYSTEM" icon="//" count={eventLog.length}>
                 {eventLog.length === 0
                     ? <Empty text="No events yet. Inject disruptions to generate events for replay." />
                     : eventLog.map(ev => (
-                        <div key={ev.id} onClick={() => setReplayEvent(ev)} style={{
-                            padding: '12px 16px', background: '#1a1a1a', border: '1px solid #2a2a2a',
-                            borderRadius: 6, cursor: 'pointer', marginBottom: 6, transition: 'all .15s',
-                            borderLeft: `3px solid ${ev.severity === 'HIGH' ? '#ef4444' : ev.severity === 'MEDIUM' ? '#f59e0b' : '#22c55e'}`,
-                        }}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#222'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = '#1a1a1a'; }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ fontSize: 12, fontWeight: 700, color: '#e0e0e0' }}>{ev.title}</span>
-                                <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 3, background: '#22c55e18', color: '#22c55e', fontWeight: 700 }}>RESOLVED</span>
+                        <div key={ev.id} onClick={() => setReplayEvent(ev)} className="dashboard-card" style={{ marginBottom: 12, cursor: 'pointer' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                                <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, color: 'var(--text-primary)' }}>{ev.title}</span>
+                                <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(0, 255, 135, 0.1)', color: 'var(--accent)', fontWeight: 700, fontFamily: 'var(--font-sans)', border: '1px solid var(--glass-border)' }}>RESOLVED</span>
                             </div>
-                            <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>{ev.summary}</div>
-                            <div style={{ fontSize: 10, color: '#555', marginTop: 2 }}>{ev.cost_impact} • Click to replay →</div>
+                            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{ev.summary}</div>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', marginTop: 12 }}>{ev.cost_impact} • Click to replay →</div>
                         </div>
                     ))
                 }
@@ -150,37 +179,38 @@ export default function Dashboard({ agentStats, agentMemory, eventLog, cascadeAl
 
             {/* ──── Replay Modal ──── */}
             {replayEvent && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.85)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     onClick={() => setReplayEvent(null)}>
-                    <div style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 8, maxWidth: 640, width: '90%', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}
+                    <div className="dashboard-card" style={{ maxWidth: 720, width: '90%', maxHeight: '85vh', display: 'flex', flexDirection: 'column', p: 0, padding: 0 }}
                         onClick={e => e.stopPropagation()}>
-                        <div style={{ padding: '12px 16px', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: '#fff' }}>
-                            <span>↻ Replay: {replayEvent.title}</span>
-                            <button onClick={() => setReplayEvent(null)} style={{ background: 'none', border: 'none', color: '#888', fontSize: 16, cursor: 'pointer' }}>✕</button>
+                        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+                                [Replay]: {replayEvent.title}
+                            </span>
+                            <button onClick={() => setReplayEvent(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 18, cursor: 'pointer' }}>X</button>
                         </div>
-                        <div style={{ padding: 16, overflowY: 'auto', flex: 1, fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-                            {/* Timeline header */}
-                            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid #333', fontSize: 11, color: '#888' }}>
-                                <span>Severity: <b style={{ color: replayEvent.severity === 'HIGH' ? '#ef4444' : '#f59e0b' }}>{replayEvent.severity}</b></span>
-                                <span>Affected: {replayEvent.affected_count}</span>
-                                <span>Rerouted: {replayEvent.rerouted_count}</span>
+                        <div style={{ padding: 24, overflowY: 'auto', flex: 1 }} className="custom-scroll">
+                            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--glass-border)', fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-sans)' }}>
+                                <span>Severity: <b style={{ color: 'var(--accent)' }}>{replayEvent.severity}</b></span>
+                                <span>Affected: <AnimatedNumber value={replayEvent.affected_count} /></span>
+                                <span>Rerouted: <AnimatedNumber value={replayEvent.rerouted_count} /></span>
                                 <span>{replayEvent.cost_impact}</span>
-                                <span style={{ color: '#22c55e', fontWeight: 700, marginLeft: 'auto' }}>✓ RESOLVED</span>
+                                <span style={{ color: 'var(--accent)', fontWeight: 700, marginLeft: 'auto' }}>[RESOLVED]</span>
                             </div>
 
                             {/* Step-by-step replay */}
                             {replayEvent.steps?.map((step, i) => (
-                                <div key={i} style={{ padding: '10px 0', position: 'relative' }}>
+                                <div key={i} style={{ padding: '12px 0', position: 'relative' }}>
                                     {i < replayEvent.steps.length - 1 && (
-                                        <div style={{ position: 'absolute', left: 38, top: 26, bottom: -10, width: 1, background: '#333' }}></div>
+                                        <div style={{ position: 'absolute', left: 42, top: 32, bottom: -12, width: 1, background: 'var(--glass-border)' }}></div>
                                     )}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                                        <span style={{ width: 20, height: 20, borderRadius: '50%', background: `${AGENT_COLORS[step.agent] || '#555'}22`, border: `2px solid ${AGENT_COLORS[step.agent] || '#555'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, color: AGENT_COLORS[step.agent], fontWeight: 700, flexShrink: 0 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                                        <span style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: `1px solid ${AGENT_COLORS[step.agent] || 'var(--accent)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: AGENT_COLORS[step.agent] || 'var(--text)', fontWeight: 700, flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
                                             {i + 1}
                                         </span>
-                                        <span style={{ fontSize: 11, fontWeight: 700, color: AGENT_COLORS[step.agent] || '#888', letterSpacing: 1 }}>{step.agent}</span>
+                                        <span style={{ fontFamily: 'var(--font-sans)', fontStyle: 'italic', fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: 1 }}>{step.agent}</span>
                                     </div>
-                                    <div style={{ lineHeight: 1.7, color: '#d0d0d0', paddingLeft: 32, fontSize: 11 }}>
+                                    <div style={{ lineHeight: 1.7, color: 'var(--text-secondary)', paddingLeft: 40, fontSize: 13, fontFamily: 'var(--font-sans)' }}>
                                         {step.bullets?.map((b, j) => <div key={j}>• {b}</div>)}
                                     </div>
                                 </div>
@@ -188,15 +218,15 @@ export default function Dashboard({ agentStats, agentMemory, eventLog, cascadeAl
 
                             {/* Fix details */}
                             {replayEvent.fix_details?.length > 0 && (
-                                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #333' }}>
-                                    <div style={{ fontSize: 10, fontWeight: 700, color: '#888', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Fix Details</div>
+                                <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--glass-border)' }}>
+                                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Fix Details</div>
                                     {replayEvent.fix_details.map((f, i) => (
-                                        <div key={i} style={{ display: 'flex', gap: 12, padding: '5px 0', fontSize: 11, color: '#999', borderBottom: '1px solid #222', alignItems: 'center' }}>
-                                            <span style={{ color: '#3b82f6', fontWeight: 700 }}>#{f.id}</span>
+                                        <div key={i} style={{ display: 'flex', gap: 16, padding: '8px 0', fontSize: 12, color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)', alignItems: 'center', fontFamily: 'var(--font-sans)' }}>
+                                            <span style={{ color: 'var(--white)', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>#{f.id}</span>
                                             <span>{f.old_carrier} → {f.new_carrier}</span>
                                             <span>ETA: {f.old_eta}h → {f.new_eta}h</span>
-                                            <span style={{ color: '#888' }}>₹{f.old_cost?.toLocaleString()} → ₹{f.new_cost?.toLocaleString()}</span>
-                                            <span style={{ color: '#22c55e', marginLeft: 'auto' }}>{f.fix}</span>
+                                            <span style={{ color: 'var(--text-muted)' }}>${f.old_cost?.toLocaleString()} → ${f.new_cost?.toLocaleString()}</span>
+                                            <span style={{ color: 'var(--accent)', marginLeft: 'auto', fontWeight: 600 }}>{f.fix}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -205,38 +235,44 @@ export default function Dashboard({ agentStats, agentMemory, eventLog, cascadeAl
                     </div>
                 </div>
             )}
+
         </div>
     );
 }
 
 function Section({ title, icon, color, count, children }) {
     return (
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <div style={{
-                fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: '#888',
-                letterSpacing: 1, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8,
-                borderBottom: '1px solid #222', paddingBottom: 8,
+                fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800,
+                marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12,
+                borderBottom: '1px solid var(--glass-border)', paddingBottom: 16,
             }}>
-                <span style={{ fontSize: 14 }}>{icon}</span>
-                <span>{title}</span>
-                {count != null && <span style={{ color, fontWeight: 700 }}>({count})</span>}
+                <span style={{ fontSize: 20, color: 'var(--accent)' }}>{icon}</span>
+                <span style={{
+                    background: 'linear-gradient(180deg, #ffffff 40%, #00ff87 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                }}>{title}</span>
             </div>
             {children}
         </div>
     );
 }
 
-function Stat({ label, value, suffix, color }) {
+function Stat({ label, value, prefix = '', suffix = '' }) {
     return (
         <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color, fontFamily: 'var(--font-mono)' }}>{value}{suffix || ''}</div>
-            <div style={{ fontSize: 8, color: '#888', marginTop: 2, letterSpacing: 1, textTransform: 'uppercase' }}>{label}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+                {typeof value === 'number' ? <AnimatedNumber value={value} prefix={prefix} suffix={suffix ? <span style={{ color: 'var(--accent)', fontSize: '0.8em' }}>{suffix}</span> : ''} /> : value}
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'var(--font-sans)' }}>{label}</div>
         </div>
     );
 }
 
 function Empty({ text }) {
     return (
-        <div style={{ padding: 24, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555' }}>{text}</div>
+        <div style={{ padding: 32, textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--text-muted)' }}>{text}</div>
     );
 }

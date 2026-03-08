@@ -247,11 +247,31 @@ body {
   color: var(--text-secondary);
   font-size: 0.875rem;
   font-weight: 500;
-  transition: color 0.2s ease;
+  transition: color 0.3s ease;
+  position: relative;
+  padding-bottom: 4px;
+}
+
+.sticky-nav__links a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 80%;
+  height: 2px;
+  background: #00ff87;
+  box-shadow: 0 0 8px #00ff87aa, 0 0 16px #00ff8744;
+  border-radius: 1px;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sticky-nav__links a:hover {
   color: var(--text-primary);
+}
+
+.sticky-nav__links a:hover::after {
+  transform: translateX(-50%) scaleX(1);
 }
 
 .glass-btn--nav {
