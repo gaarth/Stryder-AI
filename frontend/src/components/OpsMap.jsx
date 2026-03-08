@@ -133,7 +133,7 @@ export default function OpsMap({ simTime, shipments, ports, warehouses, onSelect
                 boxShadow: '0 8px 32px rgba(0,0,0,0.5)', overflow: 'hidden',
                 transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                 width: showLegend ? 200 : 80,
-                maxHeight: showLegend ? 400 : 36,
+                maxHeight: showLegend ? '80vh' : 36,
             }}>
                 <button
                     onClick={() => setShowLegend(!showLegend)}
@@ -148,9 +148,10 @@ export default function OpsMap({ simTime, shipments, ports, warehouses, onSelect
                     LEGEND <span style={{ transition: 'transform 0.3s ease', transform: showLegend ? 'rotate(180deg)' : 'rotate(0deg)' }}>^</span>
                 </button>
 
-                <div style={{
+                <div className="custom-scroll" style={{
                     padding: '0 12px 12px 12px', display: 'flex', flexDirection: 'column', gap: 12,
-                    opacity: showLegend ? 1 : 0, transition: 'opacity 0.3s ease', pointerEvents: showLegend ? 'auto' : 'none'
+                    opacity: showLegend ? 1 : 0, transition: 'opacity 0.3s ease', pointerEvents: showLegend ? 'auto' : 'none',
+                    overflowY: 'auto', maxHeight: 'calc(80vh - 36px)',
                 }}>
                     {/* Ports */}
                     <div>

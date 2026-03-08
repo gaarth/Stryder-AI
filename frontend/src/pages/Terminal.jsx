@@ -298,14 +298,6 @@ export default function Terminal() {
                         <button className={`nav-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Dashboard</button>
                         <button className={`nav-tab ${view === 'learning-hub' ? 'active' : ''}`} onClick={() => setView('learning-hub')}>Learning Hub</button>
                     </div>
-                    <span className="sep">│</span>
-                    <span className="stat">T{state?.time_tick || 0}</span>
-                    <span className="sep">│</span>
-                    <span className="stat st-transit">{stats.in_transit || 0} ^</span>
-                    <span className="stat st-delayed">{stats.delayed || 0} v</span>
-                    <span className="stat st-delivered">{stats.delivered || 0} OK</span>
-                    <span className="sep">│</span>
-                    <span className={`stat strategy-${strategy}`}>{strategy.toUpperCase()}</span>
                 </div>
                 <div className="top-right">
                     {/* Strategy Mode Toggle */}
@@ -459,11 +451,8 @@ export default function Terminal() {
                         </div>
                     </div>
                     <div className="right-col">
-                        <div className="terminal-container">
+                        <div className="terminal-container" style={{ flex: 1 }}>
                             <AgentTerminal messages={termMessages} onSend={handleChat} onShipmentClick={handleShipmentClick} />
-                        </div>
-                        <div className="metrics-container">
-                            <MetricsFeed entries={state?.metrics_log || []} />
                         </div>
                     </div>
                 </div>

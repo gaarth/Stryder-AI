@@ -123,3 +123,32 @@
 .chat-input::placeholder {
     color: var(--text-muted);
 }
+
+/* ── Thinking Animation ── */
+.thinking-anim {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 20px;
+}
+
+.thinking-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #22d3ee;
+    text-shadow: 0 0 8px rgba(34, 211, 238, 0.5), 0 0 20px rgba(34, 211, 238, 0.2);
+    animation: thinking-pulse 1.2s ease-in-out infinite;
+    letter-spacing: 0.5px;
+}
+
+@keyframes thinking-pulse {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}

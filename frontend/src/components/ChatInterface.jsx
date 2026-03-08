@@ -9,6 +9,26 @@ const AGENT_COLORS = {
     Executor: '#10b981', Cascade: '#06b6d4', System: '#00ff41',
 };
 
+const THINKING_MESSAGES = [
+    '[SENTINEL] Scanning telemetry for Vishakhapatnam Port...',
+    '[STRATEGIST] Consulting @CASCADE_MODEL for risk assessment...',
+    '[ACTUARY] Calculating SLA breach vs. Reroute cost...',
+    '[EXECUTOR] Formulating autonomous intervention...',
+];
+
+function ThinkingAnimation() {
+    const [idx, setIdx] = useState(0);
+    useEffect(() => {
+        const timer = setInterval(() => setIdx(i => (i + 1) % THINKING_MESSAGES.length), 1200);
+        return () => clearInterval(timer);
+    }, []);
+    return (
+        <div className="thinking-anim">
+            <span className="thinking-text">{THINKING_MESSAGES[idx]}</span>
+        </div>
+    );
+}
+
 function TypewriterText({ text, speed = 12, onDone }) {
     const [displayed, setDisplayed] = useState('');
     const idx = useRef(0);
@@ -151,8 +171,8 @@ export default function ChatInterface({ shipmentContext }) {
                 })}
                 {loading && (
                     <div className="chat-msg agent">
-                        <div className="msg-tag" style={{ color: 'var(--accent)' }}>[AGENT]</div>
-                        <div className="msg-body"><div className="thinking-bar" style={{ width: 100 }}></div></div>
+                        <div className="msg-tag" style={{ color: '#22d3ee' }}>[THINKING]</div>
+                        <div className="msg-body"><ThinkingAnimation /></div>
                     </div>
                 )}
                 <div ref={endRef} />

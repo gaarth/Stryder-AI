@@ -22,21 +22,28 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS — build final origins list (deduplicated)
-_all_origins = set(CORS_ORIGINS)
-_all_origins.add("http://localhost:3000")
-_all_origins.add("http://localhost:5173")
-ALLOWED_ORIGINS = sorted(_all_origins)
-print(f"[STRYDER AI] CORS allowed origins: {ALLOWED_ORIGINS}")
+# CORS — regex-based to support Vercel preview deployments
+_explicit_origins = list(set(CORS_ORIGINS) | {
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://stryder-ai.vercel.app",
+    "https://stryder-ai-gaarths-projects.vercel.app",
+})
+# Regex covers all Vercel preview builds: stryder-ai-*.vercel.app
+_origin_regex = r"https://stryder-ai(-[a-z0-9-]+)?\.vercel\.app|http://localhost:(3000|5173)"
+
+print(f"[STRYDER AI] CORS explicit origins: {sorted(_explicit_origins)}")
+print(f"[STRYDER AI] CORS regex: {_origin_regex}")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=_explicit_origins,
+    allow_origin_regex=_origin_regex,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
-    max_age=600,  # cache preflight for 10 min
+    max_age=600,
 )
 
 # ============================================================

@@ -1,9 +1,14 @@
 /**
  * STRYDER AI — API Service
- * Centralized API client for all backend endpoints.
- * Uses VITE_BACKEND_URL (env) or falls back to Render production URL.
+ * Uses relative /api paths in production (triggers Vercel proxy → Render)
+ * Uses VITE_BACKEND_URL in development (direct localhost:8000)
  */
-const BASE = import.meta.env.VITE_BACKEND_URL || 'https://stryder-ai-backend.onrender.com';
+
+// In production, use '' (empty) so requests go to /api/* → Vercel rewrites to Render
+// In development, use the env var or fallback to localhost:8000
+const BASE = import.meta.env.PROD
+    ? ''
+    : (import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000');
 
 let _connected = false;
 
@@ -23,12 +28,20 @@ async function request(path, options = {}) {
         // Log first successful connection
         if (!_connected) {
             _connected = true;
-            console.log(`%c[STRYDER AI] SYSTEM CONNECTED — Backend: ${BASE}`, 'color: #00ff88; font-weight: bold;');
+            console.log(
+                `%c[STRYDER AI] SYSTEM CONNECTED — Backend: ${BASE || 'Vercel Proxy → Render'}`,
+                'color: #22d3ee; font-weight: bold; font-size: 14px;'
+            );
         }
 
         return res.json();
     } catch (err) {
-        console.error(`[STRYDER AI] Fetch failed: ${path}`, err.message);
+        if (!_connected) {
+            console.error(
+                `%c[STRYDER AI] Connection to backend FAILED: ${err.message}`,
+                'color: #ef4444; font-weight: bold;'
+            );
+        }
         throw err;
     }
 }
