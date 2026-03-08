@@ -264,6 +264,11 @@
     transition: border-color 0.2s var(--ease-smooth);
 }
 
+.sc-select option {
+    background: #0a0a0a;
+    color: #e0e0e0;
+}
+
 .sc-select:hover {
     border-color: var(--glass-border-hover);
 }

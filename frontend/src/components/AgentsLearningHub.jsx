@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useRealtimeTable } from '../lib/realtime';
 import './AgentsLearningHub.css';
 
 const MOCK_LEARNINGS = [
@@ -153,6 +154,7 @@ function ClaudeThinkingBox({ thoughts, isExpanded }) {
 export default function AgentsLearningHub() {
     const [loaded, setLoaded] = useState(false);
     const [expandedId, setExpandedId] = useState(null);
+    const { data: realtimeLogs } = useRealtimeTable('agent_learning_logs', { limit: 20 });
 
     useEffect(() => {
         // Trigger mounting animation
@@ -160,23 +162,36 @@ export default function AgentsLearningHub() {
         return () => clearTimeout(timer);
     }, []);
 
+    // Combine realtime data with mock data or just use realtime if available
+    const displayLogs = realtimeLogs && realtimeLogs.length > 0
+        ? realtimeLogs.map(l => ({
+            id: l.id,
+            title: `${l.agent_name} Optimization`,
+            desc: l.log_message,
+            strategy: 'AI Fix Applied',
+            occurrences: 1,
+            last: l.sim_time || 'Just now',
+            thoughts: [l.log_message]
+        }))
+        : MOCK_LEARNINGS;
+
     return (
         <div className={`learning-hub-dashboard ${loaded ? 'visible' : ''}`}>
             <div className="lh-logs-list">
-                {MOCK_LEARNINGS.map((log, i) => {
-                    const isExpanded = expandedId === i;
+                {displayLogs.map((log, i) => {
+                    const isExpanded = expandedId === (log.id || i);
 
                     return (
                         <div
-                            key={i}
+                            key={log.id || i}
                             className={`lh-dashboard-card animate-in ${isExpanded ? 'is-expanded' : ''}`}
-                            style={{ animationDelay: `${i * 0.1}s` }}
-                            onClick={() => setExpandedId(isExpanded ? null : i)}
+                            style={{ animationDelay: `${i * 0.05}s` }}
+                            onClick={() => setExpandedId(isExpanded ? null : (log.id || i))}
                         >
                             <div className="lh-card-header">
                                 <div className="lh-brand">
                                     <span className="lh-brand-icon">//</span>
-                                    <span className="lh-brand-text">AEGIS LEARNING</span>
+                                    <span className="lh-brand-text">STRYDER LEARNING</span>
                                 </div>
                                 <div className="lh-expand-indicator">
                                     {isExpanded ? 'COLLAPSE ^' : 'EXPAND DETAILS v'}
@@ -196,8 +211,8 @@ export default function AgentsLearningHub() {
                                 </div>
 
                                 <div className="lh-card-meta">
-                                    <span>Occurrences: {log.occurrences}</span>
-                                    <span>Last: {log.last}</span>
+                                    <span style={{ fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>Occurrences: {log.occurrences}</span>
+                                    <span style={{ fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>Last: {log.last}</span>
                                 </div>
                             </div>
 
