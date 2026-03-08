@@ -1,23 +1,25 @@
 """
-STRYDER AI — Sovereign Orchestrator v6 :: KILLSWITCH
+STRYDER AI — Sovereign Orchestrator v7 :: GROQ BRAIN
 =============================================
-IDENTITY: Palantir-grade autonomous operations engine.
-PROTOCOL: Agent > Dashboard. Decide > Report. Act > Summarize.
-
-KILLSWITCH RULES:
-1. COGNITIVE FILTER: ML scores are INTERNAL. Never dump raw JSON/numbers.
-   Bad:  '@ETA says 31.2h'
-   Good: 'Reroute via Kandla is optimal. ETA reduced by 9 hours. READY FOR EXECUTION.'
-2. TOTAL EXECUTION: 'fix it' = auto-select highest CASCADE risk, filter reroute
-   options internally via ETA + CARRIER, execute the best one, confirm done.
-3. NO SUMMARIES: Never start with 'There are 120 shipments'. Focus on the ANOMALY.
-4. AGENCY > REPORTING: Change the database state, not just the chatbox state.
+Architecture:
+- Groq (Llama 3.3 70B) is the conversational brain.
+- ML models (ETA, DELAY, CARRIER, HUB, CASCADE) run inference.
+- Results are fed into Groq's system prompt as live context.
+- Execution commands (fix, optimize, apply) stay deterministic.
+- Everything else: Groq answers freely with full simulation awareness.
 """
+import json
 import re
 import time
 import uuid
 from datetime import datetime
 from typing import Optional
+
+try:
+    from groq import Groq
+    HAS_GROQ = True
+except ImportError:
+    HAS_GROQ = False
 
 from backend.agents.base_agent import Decision
 from backend.agents.sentinel import SentinelAgent
@@ -25,6 +27,7 @@ from backend.agents.strategist import StrategistAgent
 from backend.agents.actuary import ActuaryAgent
 from backend.agents.executor import ExecutorAgent
 from backend.agents.cascade import CascadeAgent
+from backend.config import GROQ_API_KEY, GROQ_MODEL
 
 # ────────────────────────────────────────────
 # INTENT TYPES
@@ -74,18 +77,30 @@ class AgentOrchestrator:
 
         # ── CONTEXT TRACKING (conversation memory) ──
         self._active_shipment_id: Optional[int] = None
-        self._previous_shipment_id: Optional[int] = None  # for "the other one"
+        self._previous_shipment_id: Optional[int] = None
         self._active_agent: Optional[str] = None
         self._last_optimize_id: Optional[int] = None
         self._last_recommendation: Optional[dict] = None
-        self._discussed_ids: list[int] = []  # rolling window of mentioned shipments
+        self._discussed_ids: list[int] = []
+
+        # ── CONVERSATION HISTORY for Groq ──
+        self._chat_history: list[dict] = []
+        self._max_history = 20
 
         # ── COMMAND STATE (permanent constraints) ──
         self._command_state: dict = {
-            "priorities": [],       # e.g. ["Vishakhapatnam exports"]
-            "focus_locations": [],   # location IDs to highlight
-            "carrier_bans": {},     # { "Vishakhapatnam": ["CarrierX"] }
+            "priorities": [],
+            "focus_locations": [],
+            "carrier_bans": {},
         }
+
+        # ── GROQ CLIENT ──
+        self._groq = None
+        if HAS_GROQ and GROQ_API_KEY:
+            self._groq = Groq(api_key=GROQ_API_KEY)
+            print(f"[STRYDER AI] Groq LLM connected: {GROQ_MODEL}")
+        else:
+            print("[STRYDER AI] Groq LLM not available — falling back to rule-based")
 
     # ========================================
     # AGENT MANAGEMENT
@@ -199,21 +214,16 @@ class AgentOrchestrator:
 
         parsed = self._parse_message(message)
         intent = self._classify_intent(message)
-        target = parsed["target_agent"]
-        subtag = parsed["subtag"]
         clean_msg = parsed["clean_message"]
         ship_ids = parsed["ship_ids"]
-        location = parsed["location"]
-        location_id = parsed["location_id"]
+        target = parsed["target_agent"]
+        subtag = parsed["subtag"]
 
         # ── CONVERSATION MEMORY ──
-        # Handle "the other one", "what about that", follow-ups
         msg_lower = message.lower()
         if not ship_ids and ("other one" in msg_lower or "that one" in msg_lower or "previous" in msg_lower):
             if self._previous_shipment_id:
                 ship_ids = [self._previous_shipment_id]
-
-        # Context tracking with memory
         if ship_ids:
             if self._active_shipment_id and self._active_shipment_id != ship_ids[0]:
                 self._previous_shipment_id = self._active_shipment_id
@@ -225,51 +235,194 @@ class AgentOrchestrator:
         elif self._active_shipment_id and intent in ("OPTIMIZATION_REQUEST", "FIX_REQUEST"):
             ship_ids = [self._active_shipment_id]
 
-        # Subtag domain routing
-        SUBTAG_DOMAIN = {
-            "ETA_AGENT": "Strategist", "DELAY_AGENT": "Strategist",
-            "CARRIER_AGENT": "Strategist", "HUB_AGENT": "Strategist",
-            "COST_AGENT": "Actuary", "CASCADE_MODEL": "Cascade",
-        }
-        if subtag and subtag in SUBTAG_DOMAIN:
-            target = SUBTAG_DOMAIN[subtag]
+        # ====== DETERMINISTIC HANDLERS (state mutations) ======
+        # These MUST stay rule-based because they change simulation state
 
-        # ──────── COMMAND ────────
-        if intent == "COMMAND":
-            return self._handle_command(message, ops)
-
-        # ──────── LOCATION_QUERY ────────
-        if intent == "LOCATION_QUERY" and location_id:
-            return self._handle_location_query(location, location_id, ops, target, subtag)
-
-        # ──────── FIX_REQUEST ────────
+        # Fix/Execute commands
         if intent == "FIX_REQUEST":
             return self._handle_fix(message, clean_msg, ship_ids, ops, target, subtag)
 
-        # ──────── STATUS_QUERY ────────
-        if intent == "STATUS_QUERY":
-            return self._handle_status(clean_msg, ship_ids, ops, target, subtag)
-
-        # ──────── OPTIMIZATION_REQUEST ────────
-        if intent == "OPTIMIZATION_REQUEST":
+        # Optimization with options
+        if intent == "OPTIMIZATION_REQUEST" and ship_ids:
             return self._handle_optimization(clean_msg, ship_ids, ops, target, subtag)
 
-        # ──────── ANALYSIS_REQUEST ────────
-        if intent == "ANALYSIS_REQUEST":
-            return self._handle_analysis(clean_msg, ship_ids, ops, target, subtag)
+        # User commands (prioritize, never use, etc.)
+        if intent == "COMMAND":
+            return self._handle_command(message, ops)
 
-        # ──────── SCENARIO_REQUEST ────────
-        if intent == "SCENARIO_REQUEST":
-            return self._prose("System", subtag,
-                "Use the Scenario panel to inject events. "
-                "Available: PORT_CONGESTION, CARRIER_STRIKE, WEATHER_DISRUPTION, "
-                "WAREHOUSE_OVERFLOW, CUSTOMS_DELAY, ROUTE_BLOCKAGE")
+        # ====== EVERYTHING ELSE: GROQ LLM ======
+        return self._llm_respond(message, ops, ship_ids, parsed)
 
-        # ──────── SYSTEM_QUERY ────────
-        if intent == "SYSTEM_QUERY":
-            return self._handle_system(clean_msg, ops, target, subtag)
+    # ========================================
+    # GROQ LLM BRAIN
+    # ========================================
+    def _build_context(self, ops, ship_ids: list) -> str:
+        """Build live simulation context for Groq system prompt."""
+        from backend.services.model_inference import infer_shipment
+        stats = ops.get_snapshot()["stats"]
 
-        return self._prose("System", subtag, "Data not available in current simulation state.")
+        # Fleet summary
+        lines = [
+            "=== LIVE SIMULATION STATE ===",
+            f"Total shipments: {stats['total']}",
+            f"In transit: {stats['in_transit']} | Delayed: {stats['delayed']} | Delivered: {stats['delivered']}",
+            f"Active disruptions: {stats['active_disruptions']}",
+            f"Strategy: {ops.agent_memory.get('global_strategy', 'balanced').upper()}",
+        ]
+
+        # Run ML inference on the shipments the user is asking about
+        if ship_ids:
+            for sid in ship_ids[:3]:
+                ship = next((s for s in ops.shipments if s["id"] == sid), None)
+                if ship:
+                    assessment = infer_shipment(ship)
+                    lines.append(f"\n--- Shipment #{sid} ---")
+                    lines.append(f"Route: {ship['origin']} -> {ship['destination']}")
+                    lines.append(f"Status: {ship['status']} | Carrier: {ship['carrier']}")
+                    lines.append(f"ETA: {ship['eta_hours']}h | Base cost: INR {ship['base_cost']:,.0f} | Current: INR {round(ship['current_cost']):,}")
+                    if ship.get("disrupted"):
+                        lines.append(f"DISRUPTED (event: {ship.get('disruption_id')})")
+                    # ML model outputs
+                    eta = assessment.get("eta", {})
+                    delay = assessment.get("delay", {})
+                    carrier = assessment.get("carrier", {})
+                    cascade = assessment.get("cascade", {})
+                    lines.append(f"@ETA_AGENT: predicted {eta.get('predicted_eta_days', 'N/A')} days")
+                    lines.append(f"@DELAY_AGENT: delay probability {delay.get('delay_probability', 'N/A')}")
+                    lines.append(f"@CARRIER_AGENT: tier {carrier.get('tier', 'N/A')}, variance {carrier.get('variance', 'N/A')}")
+                    lines.append(f"@CASCADE_MODEL: cascade probability {cascade.get('cascade_probability', 'N/A')}, severity {cascade.get('severity', 'N/A')}")
+
+        # Top at-risk shipments (always include for awareness)
+        at_risk = []
+        for s in ops.shipments:
+            if s["status"] in ("IN_TRANSIT", "DELAYED"):
+                assessment = infer_shipment(s)
+                cp = assessment.get("cascade", {}).get("cascade_probability", 0)
+                dp = assessment.get("delay", {}).get("delay_probability", 0)
+                risk = (cp * 2) + dp + (0.3 if s.get("disrupted") else 0)
+                if risk > 0.5:
+                    at_risk.append((s, risk, assessment))
+        at_risk.sort(key=lambda x: x[1], reverse=True)
+
+        if at_risk:
+            lines.append(f"\n=== TOP {min(len(at_risk), 5)} AT-RISK SHIPMENTS ===")
+            for s, risk, assess in at_risk[:5]:
+                cp = assess.get("cascade", {}).get("cascade_probability", 0)
+                dp = assess.get("delay", {}).get("delay_probability", 0)
+                lines.append(f"  #{s['id']} {s['origin']}->{s['destination']} [{s['status']}] "
+                             f"cascade={cp:.2f} delay={dp:.2f}")
+        else:
+            lines.append("\n=== RISK STATUS: ALL CLEAR ===")
+
+        # Active disruptions detail
+        active_disruptions = [d for d in getattr(ops, 'disruptions', []) if not d.get("resolved")]
+        if active_disruptions:
+            lines.append(f"\n=== ACTIVE DISRUPTIONS ({len(active_disruptions)}) ===")
+            for d in active_disruptions[:4]:
+                lines.append(f"  {d.get('type', 'UNKNOWN')} at {d.get('location', 'unknown')} "
+                             f"(severity: {d.get('severity', 'N/A')}, affects {d.get('affected_count', 0)} shipments)")
+
+        # User constraints
+        if self._command_state["priorities"]:
+            lines.append(f"\nUser priorities: {', '.join(self._command_state['priorities'])}")
+        if self._command_state["carrier_bans"]:
+            lines.append(f"Carrier bans: {json.dumps(self._command_state['carrier_bans'])}")
+
+        # Recent learnings
+        recent = ops.learning_logs[-5:] if ops.learning_logs else []
+        if recent:
+            lines.append("\n=== RECENT AGENT ACTIONS ===")
+            for log in recent:
+                lines.append(f"  [{log['agent']}] {log['message']}")
+
+        return "\n".join(lines)
+
+    def _llm_respond(self, message: str, ops, ship_ids: list, parsed: dict) -> dict:
+        """Send user message + live context to Groq and return natural response."""
+
+        # Build context
+        context = self._build_context(ops, ship_ids)
+
+        system_prompt = f"""You are STRYDER SOVEREIGN, an advanced logistics AI managing a shipping network centered on Vishakhapatnam Port, India.
+
+You have 5 ML sensor models feeding you real-time data:
+- @ETA_AGENT: Physics-based arrival time prediction
+- @DELAY_AGENT: Statistical delay probability
+- @CARRIER_AGENT: Carrier reliability scoring
+- @HUB_AGENT: Port/warehouse congestion forecasting
+- @CASCADE_MODEL: Chain-reaction failure risk (0.0-1.0)
+
+Below is the LIVE state of the simulation right now. Use this data to answer the user's questions accurately.
+
+{context}
+
+RULES:
+1. Be conversational, intelligent, and direct. You are an operations expert, not a chatbot.
+2. When discussing shipments, reference the ML model outputs to support your analysis.
+3. If the user asks about risk, anomalies, or problems — dig into the data and give them insight.
+4. If the user wants to fix something, tell them to say "fix it" or "fix shipment #ID" and you'll execute.
+5. If the user wants to optimize, tell them to say "optimize shipment #ID".
+6. Don't dump raw JSON. Interpret the data like an analyst would.
+7. You can discuss strategy, trade-offs, what-if scenarios, carrier performance — anything about the network.
+8. Keep responses concise but thorough. No filler. No generic AI disclaimers.
+9. If asked about something outside logistics, you can still chat but bring it back to ops.
+10. Do NOT use markdown formatting (no **, ##, etc). Plain text only."""
+
+        # Add user message to history
+        self._chat_history.append({"role": "user", "content": message})
+
+        # Build messages for Groq
+        messages = [{"role": "system", "content": system_prompt}]
+        # Include conversation history (last N messages)
+        for msg in self._chat_history[-self._max_history:]:
+            messages.append(msg)
+
+        if self._groq:
+            try:
+                response = self._groq.chat.completions.create(
+                    model=GROQ_MODEL,
+                    messages=messages,
+                    temperature=0.6,
+                    max_tokens=1024,
+                )
+                text = response.choices[0].message.content
+            except Exception as e:
+                print(f"[STRYDER AI] Groq error: {e}")
+                text = self._fallback_response(message, ops, ship_ids, parsed)
+        else:
+            text = self._fallback_response(message, ops, ship_ids, parsed)
+
+        # Strip markdown if Groq accidentally includes it
+        text = text.replace("**", "").replace("##", "").replace("# ", "").replace("---", "")
+
+        # Save to history
+        self._chat_history.append({"role": "assistant", "content": text})
+        if len(self._chat_history) > self._max_history * 2:
+            self._chat_history = self._chat_history[-self._max_history:]
+
+        return {
+            "agent": parsed.get("target_agent") or "Sovereign",
+            "subtag": parsed.get("subtag"),
+            "response": text,
+            "timestamp": datetime.now().isoformat(),
+            "thinking": True,
+            "models_used": ["ETA_AGENT", "DELAY_AGENT", "CARRIER_AGENT", "HUB_AGENT", "CASCADE_MODEL"],
+        }
+
+    def _fallback_response(self, message: str, ops, ship_ids: list, parsed: dict) -> str:
+        """Rule-based fallback when Groq is unavailable."""
+        stats = ops.get_snapshot()["stats"]
+        if ship_ids:
+            sid = ship_ids[0]
+            ship = next((s for s in ops.shipments if s["id"] == sid), None)
+            if ship:
+                return (f"Shipment #{sid}: {ship['origin']} to {ship['destination']}, "
+                        f"status {ship['status']}, carrier {ship['carrier']}, "
+                        f"ETA {ship['eta_hours']}h, cost INR {round(ship['current_cost']):,}. "
+                        f"Say 'fix shipment {sid}' to intervene or 'optimize shipment {sid}' for options.")
+        return (f"Network: {stats['in_transit']} in transit, {stats['delayed']} delayed, "
+                f"{stats['active_disruptions']} disruptions. "
+                f"Ask me about any shipment, location, or say 'fix it' to intervene.")
 
     # ========================================
     # LOCATION QUERY (ML-backed)
