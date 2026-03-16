@@ -1,7 +1,7 @@
 # Stryder AI
 **Agentic Multi-Agent Logistics Intelligence Platform**
 
-![Stryder AI Header](https://via.placeholder.com/1200x400.png?text=STRYDER+AI) *(Add your banner here)*
+
 
 🚀 **Live Deployment**: [https://stryder-ai.vercel.app](https://stryder-ai.vercel.app)
 
